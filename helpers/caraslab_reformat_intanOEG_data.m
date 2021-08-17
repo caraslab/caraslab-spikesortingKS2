@@ -197,7 +197,7 @@ for i = 1:numel(blocknames)
         epData.event_states = info.eventId;
         epData.timestamps = timestamps - data_timestamps(1); % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
-        epData.info.StartTime = datestr(info.header.date_created,'yyyy-mm-dd_HH-MM-SS');
+        epData.info.StartTime = datevec(info.header.date_created,'dd-mmm-yyyy HH:MM:SS');
         
         save(events_filename, 'epData','-v7.3')
         
