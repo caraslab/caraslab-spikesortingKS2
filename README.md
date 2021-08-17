@@ -1,4 +1,4 @@
-# caraslab-spikesortingKS2
+# CarasLab-SpikeSortingKS2
 
 Pipeline for spike sorting multi-channel data acquired with TDT and Intan hardware.
 
