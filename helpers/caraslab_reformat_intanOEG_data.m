@@ -134,21 +134,26 @@ for i = 1:numel(blocknames)
         t1 = 0;
         while ~eof
             disp(['Chunk counter: ' num2str(chunk_counter) '...']);
-            rawsig = [];
+            tic
+%             rawsig = int16([]);
+            rawsig = cell(length(data_channels),1);
             t2 = t1 + chunk_size;  % Update t2
             disp(['Reading data channels...']);
-            for ch_idx=1:length(data_channels)
+%             for ch_idx=1:length(data_channels)
+            parfor ch_idx=1:length(data_channels)
                 [cur_ch_data, ~, ~, is_eof] = load_open_ephys_data_chunked(fullfile(fullpath, data_channels{ch_idx}), t1, t2, 'samples');
-                rawsig = [rawsig; cur_ch_data'];
+%                 rawsig = [rawsig; int16(cur_ch_data)'];
+                rawsig{ch_idx} = int16(cur_ch_data)';
                 if is_eof
                     eof = 1;
                 end
-
             end
+            rawsig = cell2mat(rawsig);
             disp(['Writing to file...']);
             fwrite(fid_data, rawsig, 'int16');
             t1 = t2;  % Update t1
             chunk_counter = chunk_counter + 1;
+            toc
         end
         fclose(fid_data);
         
