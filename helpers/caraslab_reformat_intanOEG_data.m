@@ -99,7 +99,7 @@ for i = 1:numel(blocknames)
     fid_data = fopen(data_filename,'w');
     fid_adc = fopen(adc_filename,'w');
     
-    try
+%     try
         
         % Data channels have the naming convention *CHXX.continuous
         % Read recording info to get channel order; ADC channels will also
@@ -129,31 +129,23 @@ for i = 1:numel(blocknames)
         
         %% Read data channels and add to .dat
         fprintf('Concatenating data channels in chunks:\n')
-        eof = 0;
+        eof = {0};
         chunk_counter = 1;
         t1 = 0;
-        while ~eof
+        while ~all([eof{:}])
             disp(['Chunk counter: ' num2str(chunk_counter) '...']);
-            tic
-%             rawsig = int16([]);
             rawsig = cell(length(data_channels),1);
             t2 = t1 + chunk_size;  % Update t2
             disp(['Reading data channels...']);
-%             for ch_idx=1:length(data_channels)
             parfor ch_idx=1:length(data_channels)
-                [cur_ch_data, ~, ~, is_eof] = load_open_ephys_data_chunked(fullfile(fullpath, data_channels{ch_idx}), t1, t2, 'samples');
-%                 rawsig = [rawsig; int16(cur_ch_data)'];
+                [cur_ch_data, ~, ~, eof{ch_idx}] = load_open_ephys_data_chunked(fullfile(fullpath, data_channels{ch_idx}), t1, t2, 'samples');
                 rawsig{ch_idx} = int16(cur_ch_data)';
-                if is_eof
-                    eof = 1;
-                end
             end
             rawsig = cell2mat(rawsig);
             disp(['Writing to file...']);
             fwrite(fid_data, rawsig, 'int16');
             t1 = t2;  % Update t1
             chunk_counter = chunk_counter + 1;
-            toc
         end
         fclose(fid_data);
         
@@ -205,11 +197,7 @@ for i = 1:numel(blocknames)
         epData.event_states = info.eventId;
         epData.timestamps = timestamps - data_timestamps(1); % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
-        
-        block_timestamp = split(cur_path.name, '_');
-        block_date_timestamp = [block_timestamp{1} '_' block_timestamp{2}];
-        block_date_timestamp = datevec(block_date_timestamp, 'yyyy-mm-dd_HH-MM-SS');
-        epData.info.StartTime = block_date_timestamp;  % TDT-like
+        epData.info.StartTime = datestr(info.header.date_created,'yyyy-mm-dd_HH-MM-SS');
         
         save(events_filename, 'epData','-v7.3')
         
@@ -255,16 +243,16 @@ for i = 1:numel(blocknames)
 
         end
         
-    catch ME
-        if strcmp(ME.identifier, 'MATLAB:load:couldNotReadFile')
-            fprintf('\nFile not found\n')
-            continue
-        else
-            fprintf(ME.identifier)
-            fprintf(ME.message)
-            break
-        end
-    end
+%     catch ME
+%         if strcmp(ME.identifier, 'MATLAB:load:couldNotReadFile')
+%             fprintf('\nFile not found\n')
+%             continue
+%         else
+%             fprintf(ME.identifier)
+%             fprintf(ME.message)
+%             break
+%         end
+%     end
 
     tEnd = toc(t0);
     fprintf('\n~~~~~~\nFinished in: %d minutes and %f seconds\n~~~~~~\n', floor(tEnd/60),rem(tEnd,60));
