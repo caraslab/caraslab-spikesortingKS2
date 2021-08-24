@@ -129,9 +129,28 @@ for i = 1:numel(blocknames)
         
         %% Read data channels and add to .dat
         fprintf('Concatenating data channels in chunks:\n')
-        eof = {0};
+        %eof = {0};
+        eof = 0;
         chunk_counter = 1;
         t1 = 0;
+%         while ~eof
+%             disp(['Chunk counter: ' num2str(chunk_counter) '...']);
+%             rawsig = [];
+%             t2 = t1 + chunk_size;  % Update t2
+%             disp(['Reading data channels...']);
+%             for ch_idx=1:length(data_channels)
+%                 [cur_ch_data, ~, ~, is_eof] = load_open_ephys_data_chunked(fullfile(fullpath, data_channels{ch_idx}), t1, t2, 'samples');
+%                 rawsig = [rawsig; cur_ch_data'];
+%                 if is_eof
+%                     eof = 1;
+%                 end
+%                 
+%             end
+%             disp(['Writing to file...']);
+%             fwrite(fid_data, rawsig, 'int16');
+%             t1 = t2;  % Update t1
+%             chunk_counter = chunk_counter + 1;
+%         end
         while ~all([eof{:}])
             disp(['Chunk counter: ' num2str(chunk_counter) '...']);
             rawsig = cell(length(data_channels),1);
