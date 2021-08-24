@@ -41,11 +41,11 @@
 
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % 
-% Tankdir = '/mnt/CL_4TB_1/TDT tank/SUBJ-ID-197-210212-153532';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
-% Probetype = 'NNA4x16Lin64';
-% badchannels = [1:5, 33, 35, 37, 55, 61, 64];
-% 
+Tankdir = '/mnt/CL_4TB_1/TDT tank/SUBJ-ID-197-210212-153532';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [1:5, 33, 35, 37, 55, 61, 64];
+
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-151-210430-165127';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
 % Probetype = 'NNA4x16Lin64';
@@ -58,13 +58,14 @@ Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % badchannels = [33, 35, 37, 55, 61, 64];
 
 % 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-174-201020-101024'; 
-Probetype = 'NNBuz5x1264';
-badchannels = [33, 35, 37, 55, 61, 64];
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-174-201020-101024'; 
+% Probetype = 'NNBuz5x1264';
+% badchannels = [33, 35, 37, 55, 61, 64];
 
 
-chanMapSavedir = '/home/matheus/Documents/Spike sorting code/channelmaps';
+
+chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
 chanMap = [chanMapSavedir '/' Probetype '_synapse.mat']; 
 
 % path to temporary binary file for Kilosort (same size as data, should be on fast SSD)
@@ -113,6 +114,11 @@ caraslab_reformat_synapse_data(Tankdir,Savedir);
 % IMPORTANT 2: organize your behavior files into subfolders to be analyzed together , e.g.
 % shockTraining_pre, shockTraining_active, psychTesting_active, psychTesting_muscimol etc
 % select those folders when prompted (you can select multiple folders)
+
+% IMPORTANT 3: Make sure that the ephys for all behavioral sessions has
+% already been extracted before you run this. This code will attempt to
+% match them by date and session time and unpredictable errors may occur if
+% the target ephys folder is not present
 caraslab_behav_pipeline(Savedir, Behaviordir, 'synapse');
 
 
@@ -123,7 +129,7 @@ caraslab_behav_pipeline(Savedir, Behaviordir, 'synapse');
 %   IMPORTANT: this function is a  'living' function, i.e. you should edit it
 %   appropriately for every subject if necessary
 % e.g. whether to CAR/comb filter; template size and more...
-caraslab_createconfig(Savedir,chanMap,sel, badchannels, 1, 'synapse')
+caraslab_createconfig(Savedir,chanMap, badchannels, 1, 'synapse')
 
 
 %% 5. CREATE *DAT BINARY FILE

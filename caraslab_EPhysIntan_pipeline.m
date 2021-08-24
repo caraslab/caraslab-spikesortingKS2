@@ -35,11 +35,11 @@
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 
 % OFC PL
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [];
-% % 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
+% 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-232';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-232'; 
 % Probetype = 'NNA4x16Lin64';
@@ -62,16 +62,19 @@ badchannels = [];
 % % badchannels = setdiff(1:64, goodchannels);  % only shank 1 and 5 good
 % badchannels = [];
 
-% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-85';
-% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-85'; 
-% Probetype = 'NNoptrodeLin4';
-% badchannels = [2]; 
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-85';
+Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-85'; 
+Probetype = 'NNoptrodeLin4';
+badchannels = []; 
 
-chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2-master/channelmaps';
+
+
+
+chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
 chanMap = [chanMapSavedir '/' Probetype '_intan.mat']; 
 
 % path to temporary binary file for Kilosort (same size as data, should be on fast SSD)
-rootH = '/home/matheus/Documents'; 
+rootH = '/home/matheus/Documents';
 
 %% 1. MAKE A CHANNELMAP FILE
 % This function creates a channel map for a specific electrode probe array.
@@ -110,6 +113,11 @@ caraslab_reformat_OpenEphysGUI_data(Tankdir, Savedir, 'oe');
 % IMPORTANT 2: organize your behavior files into subfolders to be analyzed together , e.g.
 % shockTraining_pre, shockTraining_active, psychTesting_active, psychTesting_muscimol etc
 % select those folders when prompted (you can select multiple folders)
+
+% IMPORTANT 3: Make sure that the ephys for all behavioral sessions has
+% already been extracted before you run this. This code will attempt to
+% match them by date and session time and unpredictable errors may occur if
+% the target ephys folder is not present
 caraslab_behav_pipeline(Savedir, Behaviordir, 'intan');
 
 

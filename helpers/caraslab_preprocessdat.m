@@ -40,7 +40,7 @@ for i = 1:numel(datafolders)
 
     catch ME
         if strcmp(ME.identifier, 'MATLAB:load:couldNotReadFile')
-            fprintf('\n-mat file not found\n')
+            fprintf('\nConfig file not found\n')
             continue
         else
             fprintf(ME.identifier)

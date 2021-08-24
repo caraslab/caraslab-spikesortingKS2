@@ -34,7 +34,7 @@ function  [igood] = caraslab_rms_badChannels(sig)
 
     %Identify bad channels based on RMS of signal. Limits are taken directly
     %from Ludwig et al. 2009.
-    fprintf('Detecting bad channels...\n')
+%     fprintf('Detecting bad channels...\n')
     tic
     rmsvals = rms(sig, 2);
     minrms = 0.3*mean(rmsvals);
@@ -45,19 +45,19 @@ function  [igood] = caraslab_rms_badChannels(sig)
     badchans = [];
     if ~isempty(toohigh)
         badchans = [badchans; toohigh];
-        fprintf('RMS noise of channel(s) %d is too high! Removed from analysis!\n',toohigh)
+%         fprintf('RMS noise of channel(s) %d is too high! Removed from analysis!\n',toohigh)
     end
 
     if ~isempty(toolow)
         badchans = [badchans; toolow];
-        fprintf('RMS noise of channel(s) %d is too low! Removed from analysis!\n',toolow)
+%         fprintf('RMS noise of channel(s) %d is too low! Removed from analysis!\n',toolow)
     end
 
     %Remove redundant channels
     badchans = unique(badchans); 
     igood = ~ismember(1:size(sig,1), badchans);
 
-    fprintf('Done in %3.0fs!\n', toc);
+%     fprintf('Done in %3.0fs!\n', toc);
 
 end
 

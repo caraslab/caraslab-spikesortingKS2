@@ -1,4 +1,4 @@
-function caraslab_createconfig(Savedir,chanMap, badchannels, fetch_tstart_from_behav, recording_type)
+function caraslab_createconfig(Savedir,chanMap, badchannels, fetch_tstart_from_behav, recording_type, single_dir)
 %
 % This function sets configuration parameters for kilosort.
 % 
@@ -39,13 +39,17 @@ if ~exist(chanMap,'file')
     return
 end
 
-%Prompt user to select folders
-datafolders_names = uigetfile_n_dir(Savedir,'Select data directory');
-datafolders = {};
-for i=1:length(datafolders_names)
-    [~, datafolders{end+1}, ~] = fileparts(datafolders_names{i});
+if nargin > 5
+    datafolders = {};
+    [~, datafolders{end+1}, ~] = fileparts(single_dir);
+else
+    %Prompt user to select folders
+    datafolders_names = uigetfile_n_dir(Savedir,'Select data directory');
+    datafolders = {};
+    for i=1:length(datafolders_names)
+        [~, datafolders{end+1}, ~] = fileparts(datafolders_names{i});
+    end
 end
-
 %Load in the channel map and identify bad channels
 chandata = load(chanMap);
 % badchannels = chandata.chanMap(chandata.connected == 0);
@@ -100,7 +104,7 @@ for i = 1:numel(datafolders)
         ops.trange = [tstart Inf];
     end
 
-    ops.CAR = 1;  % CAR after highpass
+    ops.CAR = 0;  % CAR after highpass
     
     ops.kilosort_filter = 0; % filter during kilosort, turned off since we're prefiltering
     

@@ -200,7 +200,7 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         [~, data_timestamps, ~, ~] = load_open_ephys_data_chunked(fullfile(fullpath, data_channels{1}), 0, 5, 'samples');
 
         [event_ids, timestamps, info] = load_open_ephys_data_faster(fullfile(fullpath, 'all_channels.events'));
-        epData.event_ids = event_ids;
+        epData.event_ids = event_ids + 1;  % Convert to 1-base index
         epData.event_states = info.eventId;
         epData.timestamps = timestamps - data_timestamps(1); % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
@@ -240,7 +240,7 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
             % Convert to table and output csv
             
             fileID = fopen(fullfile(cur_savedir, 'CSV files', ...
-                [cur_path.name '_DAC' int2str(cur_event_id+1) '.csv']), 'w');
+                [cur_path.name '_DAC' int2str(cur_event_id) '.csv']), 'w');
 
             header = {'Onset', 'Offset', 'Duration'};
             fprintf(fileID,'%s,%s,%s\n', header{:});
@@ -267,7 +267,7 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         % Weird bug in OpenEphys GUI sometimes names these differently
         % Tweak this mannually
         if sum(data_channel_indeces) == 0
-            disp(['No channels named CH; tweak mannually (Lines 126,127)'])
+            disp(['No channels named CH; tweak mannually (Lines 270,271)'])
             data_channel_indeces = [ones(1, 64) 0];
             adc_channel_index = [];
         end
@@ -337,7 +337,7 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         dac_data = load_open_ephys_binary(fullfile(oebin_filedir.folder, oebin_filedir.name), 'events', 1);
 
         epData.event_states = uint16(dac_data.Data) ./ dac_data.ChannelIndex;
-        epData.event_ids = dac_data.ChannelIndex - 1;  % 0-index it
+        epData.event_ids = dac_data.ChannelIndex;  % convert to 1-base index
         epData.timestamps = double(dac_data.Timestamps - all_data.Timestamps(1)) / dac_data.Header.sample_rate; % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
         
@@ -392,7 +392,6 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
     end
 
 end
-
 
 
 

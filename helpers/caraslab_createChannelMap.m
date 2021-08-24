@@ -447,21 +447,22 @@ switch probetype
                 % From top (closest to optical fiber) to bottom
                 fprintf('This probe type has not been set up yet for the TDT system')
             case 'intan'
-                shank = [2, 1, 3, 4]; 
+                firstch = 2;
+                secondch = 1;
+                thirdch = 3;
+                fourthch = 4; 
         end
 
             % This will be used below to set kcoords appropriately
-            kcoords_map = {shank};
+            kcoords_map = {firstch, secondch, thirdch, fourthch};
 
 
             %-----------------------------------------------------------------------
             %Define the x coordinates for each channel group (in relative microns)
             %-----------------------------------------------------------------------
-            % one column
-            x = zeros(1,4);
 
             % This will be used below to set xcoords appropriately
-            xcoords_map = {x};
+            xcoords_map = {0; 0; 0; 0};
 
 
             %-----------------------------------------------------------------------
@@ -469,10 +470,8 @@ switch probetype
             %-----------------------------------------------------------------------
             % Bottom channel is 100 um above the tip and other channels
             % exten upwards in 50 um spaces (4 ch total)
-            y = fliplr(100:50:100+50*3);
-
             % This will be used below to set ycoords appropriately
-            ycoords_map = {y};
+            ycoords_map = {250; 200; 150; 100};
     otherwise
         fprintf('\nProbe dimensions not specified!\nEdit caraslab_CreateChannelMapFile.m to add dimensions before map can be generated.\n')
         return

@@ -186,7 +186,7 @@ for day_idx=1:length(unique_days)
     fclose(fidC);
     
     % Create new config.mat
-    caraslab_createconfig(Savedir,chanMap,0, unique(badchannels), 1, recording_type, full_output_dir)
+    caraslab_createconfig(Savedir,chanMap, unique(badchannels), 0, recording_type, full_output_dir)
     load(fullfile(full_output_dir, 'config.mat'));
     ops.concat_tranges = tranges;
     ops.concat_cumulative_tranges = cumulative_tranges;
