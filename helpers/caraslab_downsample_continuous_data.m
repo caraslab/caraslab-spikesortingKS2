@@ -96,7 +96,7 @@ end
 
 data = cell2mat(data');
 
-outfn = fullfile(outdir,block,sprintf('%s_LFP.mat',block));
+outfn = fullfile(outdir,sprintf('%s_LFP.mat',block));
 
 fprintf('Saving "%s" ...',outfn)
 
