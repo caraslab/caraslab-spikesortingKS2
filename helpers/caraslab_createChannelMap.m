@@ -89,7 +89,7 @@ switch probetype
                 extrasite1 = 8;     %extra sites on shank 3
                 extrasite2 = 58;     %extra sites on shank 3
                 extrasite3 = 4;     %extra sites on shank 3
-                extrasite4 = 33;     %extra sites on shank 3
+                extrasite4 = 62;     %extra sites on shank 3
         end
                 % This will be used below to set kcoords appropriately
                 kcoords_map = {[shank1L,shank1R]; [shank2L,shank2R]; ...
