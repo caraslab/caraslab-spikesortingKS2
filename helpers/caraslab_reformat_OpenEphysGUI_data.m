@@ -91,8 +91,8 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
                 fprintf('\nFile not found\n')
                 continue
             else
-                fprintf(ME.identifier)
-                fprintf(ME.message)
+                fprintf(2, ME.identifier)
+                fprintf(2, ME.message)
                 break
             end
         end
@@ -225,10 +225,16 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
             cur_offsets = cur_timestamps(cur_event_states == 0);
             
             % Handle DAC exceptions here
+            % Skip DAC if either onset or offset are completely absent
+            if isempty(cur_onsets) || isempty(cur_offsets)
+                continue
+            end
+            
             % Remove first offset if lower than first onset 
             if cur_offsets(1) < cur_onsets(1)
                 cur_offsets = cur_offsets(2:end);
             end
+            
             % Remove last onset if length mismatch
             if length(cur_onsets) ~= length(cur_offsets)
                 cur_onsets = cur_onsets(1:end-1);
@@ -361,6 +367,11 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
             cur_offsets = cur_timestamps(cur_event_states == 0);
             
             % Handle DAC exceptions here
+            % Skip DAC if either onset or offset are completely absent
+            if isempty(cur_onsets) || isempty(cur_offsets)
+                continue
+            end
+            
             % Remove first offset if lower than first onset 
             if cur_offsets(1) < cur_onsets(1)
                 cur_offsets = cur_offsets(2:end);
@@ -392,8 +403,3 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
     end
 
 end
-
-
-
-
-
