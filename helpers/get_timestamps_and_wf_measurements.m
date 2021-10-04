@@ -200,6 +200,10 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
             fileID = fopen(fullfile(gwfparams.dataDir, [prename '_cluster' int2str(cluster_phy_id) '.txt']), 'w');
             fprintf(fileID, '%.6f\n', (double(wf.allSpikeTimePoints{wf_idx}) / gwfparams.sr));
             fclose(fileID);
+            
+            %% Write spike waveforms to csv file
+            writetable(array2table(cur_wfs), fullfile(gwfparams.dataDir, 'CSV files', ...
+                [prename '_cluster' int2str(cluster_phy_id) '_waveforms.csv']));
 
             %% Continue calculations
             % 10x upsample mean waveform with spline interpolation

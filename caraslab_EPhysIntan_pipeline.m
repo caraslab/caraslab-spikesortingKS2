@@ -35,10 +35,10 @@
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 
 % OFC PL
-% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
-% Probetype = 'NNA4x16Lin64';
-% badchannels = [];
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [];
 % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-232';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-232'; 
@@ -62,10 +62,10 @@ Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % % badchannels = setdiff(1:64, goodchannels);  % only shank 1 and 5 good
 % badchannels = [];
 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-85';
-Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-85'; 
-Probetype = 'NNoptrodeLin4';
-badchannels = []; 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-85';
+% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-85'; 
+% Probetype = 'NNoptrodeLin4';
+% badchannels = []; 
 
 
 
@@ -210,7 +210,7 @@ remove_double_counted_spikes(Savedir, reload_original_npys)
 % also refilter the data with a 300-6000Hz bandpass filter and save a new
 % ~~CLEAN300Hz.dat
 show_plots = 1;
-filter_300hz = 1;
+filter_300hz = 0;
 get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 
 

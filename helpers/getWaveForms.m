@@ -105,10 +105,19 @@ for curUnitInd=1:numUnits
     curUnitID = good_clusters(curUnitInd);
     %%
     curSpikeTimes = gwfparams.spikeTimes(gwfparams.spikeClusters==curUnitID);
+    
+    % Remove noisy part of this SUBJ-ID-174 recording (135 - 360 s)
+%     if strfind(gwfparams.rawDir, 'SUBJ-ID-174') && strcmp(gwfparams.fileName, '201116_concat_CLEAN.dat')
+%         curSpikeTimes = curSpikeTimes(curSpikeTimes < (135*gwfparams.sr) | curSpikeTimes > (360*gwfparams.sr));
+%     end
+    
     allSpikeTimes{curUnitInd} = curSpikeTimes;
     curUnitnSpikes = size(curSpikeTimes,1);
     if ismember(curUnitID, good_clusters)
         spikeTimesRP = curSpikeTimes(randperm(curUnitnSpikes));
+        
+
+        
         spikeTimeKeeps(curUnitInd,1:min([gwfparams.nWf curUnitnSpikes])) = sort(spikeTimesRP(1:min([gwfparams.nWf curUnitnSpikes])));
         for curSpikeTime = 1:min([gwfparams.nWf curUnitnSpikes])
             try
