@@ -183,6 +183,12 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
             filenamestruct = dir(ops.fclean);
             dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
             nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+            
+            % In case fcean was deleted, search for the 300hz filtered one
+            if nSamp == 0
+                filenamestruct = dir(fullfile(filenamestruct.folder, '*300hz.dat'));
+                nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
+            end
             max_time = nSamp / gwfparams.sr;
             
             % Modify these if you'd like
