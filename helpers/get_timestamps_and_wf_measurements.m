@@ -68,7 +68,13 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
         subj_id = subj_id{1}; 
         recording_id = split_dir{end};
         prename = [subj_id '_' recording_id];  % this is what goes into the .txt file name
-
+        
+        % Store in ops for future use
+        ops.subj_id = subj_id;
+        ops.recording_id = recording_id;
+        ops.subj_recording_id = prename;
+        
+        
         gwfparams.rawDir = cur_savedir;
         gwfparams.sr = ops.fs;
         gwfparams.nCh = ops.NchanTOT; % Number of channels that were streamed to disk in .dat file
@@ -79,13 +85,17 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
                 % try to find the fclean file name within the cur_savedir
                 split_fclean_path = split(ops.fclean, '/');
                 fclean = split_fclean_path{end};
-                gwfparams.fileName = dir(fullfile(cur_savedir, fclean)).name; % .dat file containing the raw used for sorting
+                gwfparams.fileName = fullfile(cur_savedir, fclean); % .dat file containing the raw used for sorting
                 % Update ops
                 ops.fclean = fullfile(cur_savedir, fclean);
-                save(fullfile(cur_savedir, 'config.mat'), 'ops');
-                gwfparams.ops = ops;
             end
         end
+        % Save new config
+        save(fullfile(cur_savedir, 'config.mat'), 'ops');
+        
+        % Store (redundant) copy in gwfparams
+        gwfparams.ops = ops;
+        
         gwfparams.dataType = 'int16'; % Data type of .dat file (this should be BP filtered)
 
         gwfparams.wfWin = [round(-(0.001*gwfparams.sr)) round(0.003*gwfparams.sr)]; % Number of samples before and after spiketime to include in waveform
@@ -114,6 +124,12 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
         %% Get waveforms from .dat
         wf = getWaveForms(gwfparams, bp_filter);  
 
+        
+        %% Save gwfparams and wf for future use
+        fprintf('Saving gwfparams and wf structs to mat file\n')
+        save(fullfile(gwfparams.dataDir, 'extracted_wfs.mat'), 'gwfparams', 'wf', '-v7.3');
+        
+        %% Store some other stuff
         good_cluster_idx = wf.unitIDs; % store their Phy IDs
 
         % Create a folder called CSV files within saved directory, because
@@ -197,14 +213,21 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
             cur_wf_mean = cur_wf_mean - mean(cur_wf_mean(1:5));
 
             %% Write spike times to txt file
+            fprintf('Outputting spike times to txt file\n')
             fileID = fopen(fullfile(gwfparams.dataDir, [prename '_cluster' int2str(cluster_phy_id) '.txt']), 'w');
             fprintf(fileID, '%.6f\n', (double(wf.allSpikeTimePoints{wf_idx}) / gwfparams.sr));
             fclose(fileID);
             
             %% Write spike waveforms to csv file
+            % Delete old files first
+            old_timestamps = dir(fullfile(gwfparams.dataDir, 'CSV files', '*_waveforms.csv'));
+            for dummy_idx=1:numel(old_timestamps)
+                delete(fullfile(old_timestamps(dummy_idx).folder, old_timestamps(dummy_idx).name));
+            end
+            fprintf('Outputting spike waveforms to csv file\n')
             writetable(array2table(cur_wfs), fullfile(gwfparams.dataDir, 'CSV files', ...
                 [prename '_cluster' int2str(cluster_phy_id) '_waveforms.csv']));
-
+            
             %% Continue calculations
             % 10x upsample mean waveform with spline interpolation
             samplingRateIncrease = 10;

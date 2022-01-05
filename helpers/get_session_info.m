@@ -107,8 +107,15 @@ for s = numSessions:-1:1 % iterate backwards to preallocate
     %%
     
     % STEP 4: PARSE CONTINUOUS_DATA.OPENEPHYS TO GET CONTINUOUS FILENAMES
-    
-    DOMnode = xmlread([directory filesep 'Continuous_Data' sessStr '.openephys']);
+    try
+        DOMnode = xmlread([directory filesep 'Continuous_Data' sessStr '.openephys']);
+    catch ME
+        % New OpenEphys GUI (0.5.5.1) outputs an xml file now for some
+        % reason...
+        if strcmp(ME.identifier, 'MATLAB:xml:FileNotFound')
+            DOMnode = xmlread([directory filesep 'Continuous_Data' sessStr '.openephys.xml']);
+        end
+    end
     xRoot = DOMnode.getDocumentElement;
     
     % gather recordings

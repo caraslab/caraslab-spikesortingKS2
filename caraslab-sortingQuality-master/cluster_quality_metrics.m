@@ -1,4 +1,4 @@
-function cluster_quality_metrics(Savedir, show_plots, bp_filter)
+function cluster_quality_metrics(Savedir, show_plots, bp_filter, load_previous_gwfparams)
 % This function runs 3 quality control metrics on the curated clusters:
 % 1. ISI violation false positive rate: how many false positive spikes in a
 %   cluster.
@@ -58,10 +58,6 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
         
         fprintf('Calculating quality control metrics for: %s\n', cur_savedir)
         
-        %% Define I/O and waveform parameters
-        gwfparams.dataDir = cur_savedir;    % KiloSort/Phy output folder 
-        gwfparams.ops = ops;
-        
         % Define output name for cluster; this is specific for my
         % file-naming convention and should be tweaked
         split_dir = split(cur_savedir, '/'); 
@@ -70,39 +66,19 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
         subj_id = subj_id{1}; 
         recording_id = split_dir{end};
         prename = [subj_id '_' recording_id];  % this is what goes into the .txt file name
-
-        gwfparams.rawDir = cur_savedir;
-        gwfparams.sr = ops.fs;
-        gwfparams.nCh = ops.NchanTOT; % Number of channels that were streamed to disk in .dat file
-        gwfparams.fileName = dir(ops.fclean).name; % .dat file containing the raw used for sorting
-        gwfparams.dataType = 'int16'; % Data type of .dat file (this should be BP filtered)
-
-        gwfparams.wfWin = [round(-(0.001*gwfparams.sr)) round(0.003*gwfparams.sr)]; % Number of samples before and after spiketime to include in waveform
-        gwfparams.nWf = 2000; % Max number of waveforms per unit to pull out for averaging
-        gwfparams.spikeTimes = readNPY(fullfile(gwfparams.dataDir, 'spike_times.npy')); % Vector of cluster spike times (in samples) same length as .spikeClusters
-        gwfparams.spikeClusters = readNPY(fullfile(gwfparams.dataDir, 'spike_clusters.npy')); % Vector of cluster IDs (Phy nomenclature)   same length as .spikeTimes
-        gwfparams.channelShanks = readNPY(fullfile(gwfparams.dataDir, 'channel_shanks.npy')); % Vector of cluster shanks
-
-        gwfparams.chanMap = readNPY(fullfile(gwfparams.dataDir, 'channel_map.npy')); % this is important in esp if you got rid of files. 
-        try
-            gwfparams.cluster_quality = tdfread(fullfile(gwfparams.dataDir, 'cluster_info.tsv'));
-        catch ME
-            if strcmp(ME.identifier, 'MATLAB:load:couldNotReadFile')
-                fprintf('\nFile not found\n')
-                continue
-            else
-                fprintf(ME.identifier)  % file not found has no identifier?? C'mon MatLab...
-                fprintf([ME.message '\n'])
-                continue  % Continue here instead of break because I don't know how to catch 'file not found' exception; maybe using ME.message?
-            end
+        
+        if load_previous_gwfparams
+            [wf, gwfparams] = try_load_previous_gwfparams(cur_savedir, bp_filter, 0);
+        else
+            fprintf('Running wf extraction...\n')
+            [wf, gwfparams] = get_waveforms_from_folder(cur_savedir, bp_filter, 0);
+            % Save gwfparams and wf for future use
+            fprintf('Saving gwfparams and wf structs to mat file\n')
+            save(fullfile(day_dir, 'extracted_wfs.mat'), 'gwfparams', 'wf', '-v7.3');
         end
-
-        % Get good and mua for measuring
-        gwfparams.good_clusters = gwfparams.cluster_quality.cluster_id(gwfparams.cluster_quality.group(:,1)=='g' | gwfparams.cluster_quality.group(:,1)=='m');
-
+        
         %% Get waveforms from .dat
         fprintf('Sampling waveforms and calculating averages...')
-        wf = getWaveForms(gwfparams, bp_filter);  
 
         good_cluster_idx = wf.unitIDs; % store their Phy IDs
 
@@ -138,11 +114,11 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
             cluster_phy_id = good_cluster_idx(wf_idx);
 
             % Get channel with highest amplitude for this unit
-            % This usually works but sometimes phy fails at detecting the best
+            % best_channel = gwfparams.cluster_quality.ch(...
+            %   gwfparams.cluster_quality.cluster_id == cluster_phy_id);
+            
+            % The above usually works but sometimes phy fails at detecting the best
             % channel, so let's do it manually
-    %         best_channel = gwfparams.cluster_quality.ch(...
-    %             gwfparams.cluster_quality.cluster_id == cluster_phy_id);
-
             temp_wfs = wf.waveFormsMean(wf_idx, :,:);
             temp_wfs = abs(temp_wfs);
 
@@ -154,12 +130,10 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
 
             % Grab best channel index
             best_channel_idx = find(gwfparams.chanMap == best_channel_0in);
+            
             % Store channel and shank info
             best_channels_csv(wf_idx) = best_channel_0in + 1;
             shanks(wf_idx) = gwfparams.cluster_quality.sh(gwfparams.cluster_quality.cluster_id == cluster_phy_id);  
-            
-            % Grab best channel index
-            best_channel_idx = find(gwfparams.chanMap == best_channel_0in);
             
             % Store cluster quality
             cluster_quality_char = gwfparams.cluster_quality.group(gwfparams.cluster_quality.cluster_id == cluster_phy_id);
@@ -180,7 +154,27 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
             all_spike_times = double(wf.allSpikeTimePoints{wf_idx}) / gwfparams.sr;
             min_time = ops.trange(1);
             
-            filenamestruct = dir(ops.fclean);
+            filenamestruct = dir(ops.fclean); % .dat file containing the raw used for sorting
+            if isempty(filenamestruct)
+                % try to find the fclean file name within the cur_savedir
+                split_fclean_path = split(ops.fclean, '/');
+                fclean = split_fclean_path{end};
+                filenamestruct = dir(fullfile(cur_savedir, fclean)); % .dat file containing the raw used for sorting
+                
+                % If still not found, try adding the 300hz.dat suffix, else
+                % break
+                if isempty(filenamestruct)
+                    fclean = split_fclean_path{end}(1:end-4);
+                    filenamestruct = dir(fullfile(cur_savedir, [fclean '300hz.dat']));
+                else
+                    fprintf('DAT file not found. Check if it is in folder')
+                    break
+                end
+            end
+            
+            % This is just to get the recording duration. You can also find
+            % this from rez.mat outputted from kilosort. Might be more
+            % reliable...
             dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
             nSamp = filenamestruct.bytes/(gwfparams.nCh*dataTypeNBytes);  % Number of samples per channel
             max_time = nSamp / gwfparams.sr;
@@ -194,6 +188,7 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
             % Then run
             [fpRate, ~] = isi_violations(all_spike_times, min_time, max_time, isi_threshold, min_isi, ops);
             fpRate_list(wf_idx) = fpRate;
+            
             % TODO: Reconstruct autocorrelograms
             
             %% Amplitude cutoff
@@ -220,11 +215,12 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
 %              0 to 0.99 (an off-by-one error in the calculation ensures that it will never reach 1.0).
              pr = presence_ratio(all_spike_times, min_time, max_time, 100, ops);
              presence_ratio_list(wf_idx) = pr;
+             
              % TODO: Plot histograms
 
-             
         end
-
+        
+        %% Save fraction missing plots
         screen_size = get(0, 'ScreenSize');
 
         origSize = get(gcf, 'Position'); % grab original on screen size
@@ -237,6 +233,7 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter)
             cluster_quality fpRate_list fraction_missing_list presence_ratio_list],...
             'VariableNames',{'Cluster' 'Best_channel' 'Shank' ...
             'Cluster_quality' 'ISI_FPRate' 'Fraction_missing', 'Presence_ratio'});
+        
         % Change code into words
         TT.Cluster_quality = num2cell(TT.Cluster_quality);
         

@@ -162,7 +162,6 @@ for i = 1:numel(datafolders)
         datr = flipud(datr); % reverse time back
 
         datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
-
         
         if getOr(ops, 'rm_artifacts', 1)
 %             fprintf('Removing artifacts.......\n')

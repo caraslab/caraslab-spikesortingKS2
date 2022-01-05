@@ -104,8 +104,7 @@ for i = 1:numel(datafolders)
             else
                 fprintf('The following error was produced: ')
                 fprintf(ME.identifier)  % print unknown exception
-                break
-
+                rethrow(ME)
             end
         end
         break

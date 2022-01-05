@@ -52,10 +52,14 @@ if refilter
     caraslab_gpufilter(temp_dir.folder, ops)
     
     fileName = ops.fclean;
-
+    
 else
     ops = gwfparams.ops;
-    temp_dir = dir(ops.fclean);
+    temp_dir.fullfile = ops.fclean;
+    temp_dir_split = split(temp_dir.fullfile, filesep);
+    temp_dir.folder = join(temp_dir_split(1:end-1), filesep);
+    temp_dir.folder = temp_dir.folder{:};
+    temp_dir.name = temp_dir_split{end};
     if isfile(fullfile(temp_dir.folder, [temp_dir.name(1:end-4) '300hz.dat']))  % if no filtering is selected, check if filtered file already exists and use it
         ops.fclean = fullfile(temp_dir.folder, [temp_dir.name(1:end-4) '300hz.dat']);
         fileName = ops.fclean;
@@ -64,6 +68,9 @@ else
         fileName = fullfile(gwfparams.rawDir,gwfparams.fileName);  
     end
 end
+
+% Save modified ops
+save(fullfile(gwfparams.rawDir, 'config.mat'), 'ops');
 
 filenamestruct = dir(fileName);
 dataTypeNBytes = numel(typecast(cast(0, gwfparams.dataType), 'uint8')); % determine number of bytes per sample
@@ -94,16 +101,11 @@ waveFormsMean = nan(numUnits,nChInMap,wfNSamples);
 good_clusters = gwfparams.good_clusters;
 %%
 
-counter = 1;
+% MML edit
+counter = 0;
+progress_bar = waitbar(0, ['Completed ' int2str(counter) ' units of ' int2str(length(good_clusters))], 'Name', 'Waveform extraction');
 for curUnitInd=1:numUnits
-
-% for curUnitInd=1:length(good_cluster_idx)
-    %% phy1
-%     curUnitID = unitIDs(curUnitInd);
-    
-    %% phy2
     curUnitID = good_clusters(curUnitInd);
-    %%
     curSpikeTimes = gwfparams.spikeTimes(gwfparams.spikeClusters==curUnitID);
     
     % Remove noisy part of this SUBJ-ID-174 recording (135 - 360 s)
@@ -115,8 +117,6 @@ for curUnitInd=1:numUnits
     curUnitnSpikes = size(curSpikeTimes,1);
     if ismember(curUnitID, good_clusters)
         spikeTimesRP = curSpikeTimes(randperm(curUnitnSpikes));
-        
-
         
         spikeTimeKeeps(curUnitInd,1:min([gwfparams.nWf curUnitnSpikes])) = sort(spikeTimesRP(1:min([gwfparams.nWf curUnitnSpikes])));
         for curSpikeTime = 1:min([gwfparams.nWf curUnitnSpikes])
@@ -138,13 +138,16 @@ for curUnitInd=1:numUnits
         end
         waveFormsMean(curUnitInd,:,:) = squeeze(nanmean(waveForms(curUnitInd,:,:,:),2));
     
-        % Edited by MML
-        disp(['Completed ' int2str(counter) ' units of ' int2str(length(good_clusters)) '.']);
+        % MML edit
         counter = counter + 1;
+        waitbar(counter/length(good_clusters), progress_bar, ...
+            ['Completed ' int2str(counter) ' units of ' int2str(length(good_clusters))])
     else
         continue
     end
 end
+
+close(progress_bar)
 
 % Package in wf struct
 wf.unitIDs = unitIDs;
@@ -154,4 +157,5 @@ wf.waveFormsMean = waveFormsMean;
 
 %% MML: phy2
 wf.allSpikeTimePoints = allSpikeTimes;
+
 end

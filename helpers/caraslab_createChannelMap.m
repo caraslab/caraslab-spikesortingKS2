@@ -32,7 +32,7 @@ switch probetype
     case {'NNBuz5x1264','NN4x16Poly64','NNA4x16Lin64', 'NNA2x32'}
         Nchannels = 64;
 
-    case 'NNoptrodeLin4'
+    case {'NNoptrodeLin4', 'NNoptrodeTet4'}
         Nchannels = 4;
 end
 
@@ -444,15 +444,14 @@ switch probetype
     case 'NNoptrodeLin4'
         switch recording_format
             case 'synapse'
-                % From top (closest to optical fiber) to bottom
                 fprintf('This probe type has not been set up yet for the TDT system')
             case 'intan'
+                % From top (closest to optical fiber) to bottom
                 firstch = 2;
                 secondch = 1;
                 thirdch = 3;
                 fourthch = 4; 
         end
-
             % This will be used below to set kcoords appropriately
             kcoords_map = {firstch, secondch, thirdch, fourthch};
 
@@ -460,18 +459,39 @@ switch probetype
             %-----------------------------------------------------------------------
             %Define the x coordinates for each channel group (in relative microns)
             %-----------------------------------------------------------------------
-
-            % This will be used below to set xcoords appropriately
             xcoords_map = {0; 0; 0; 0};
 
 
             %-----------------------------------------------------------------------
             %Define the y coordinates for each channel group (in relative microns)
             %-----------------------------------------------------------------------
-            % Bottom channel is 100 um above the tip and other channels
-            % exten upwards in 50 um spaces (4 ch total)
-            % This will be used below to set ycoords appropriately
             ycoords_map = {250; 200; 150; 100};
+            
+    case 'NNoptrodeTet4'
+        switch recording_format
+            case 'synapse'
+                fprintf('This probe type has not been set up yet for the TDT system')
+            case 'intan'
+                qtrode = 1:4;
+        end
+            % This will be used below to set kcoords appropriately
+            kcoords_map = {qtrode};
+
+
+            %-----------------------------------------------------------------------
+            %Define the x coordinates for each channel group (in relative microns)
+            %-----------------------------------------------------------------------
+            % Leftmost channel is arbitrarily 0
+            xcoords_map = {[17.8, 17.8, 0, 35.6]};
+
+
+            %-----------------------------------------------------------------------
+            %Define the y coordinates for each channel group (in relative microns)
+            %-----------------------------------------------------------------------
+            % Tip of the probe is 0
+            ycoords_map = {[155.6, 120, 137.8, 137.8]};
+        
+
     otherwise
         fprintf('\nProbe dimensions not specified!\nEdit caraslab_CreateChannelMapFile.m to add dimensions before map can be generated.\n')
         return

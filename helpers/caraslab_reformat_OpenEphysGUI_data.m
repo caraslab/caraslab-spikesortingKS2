@@ -125,9 +125,10 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         % Weird bug in OpenEphys GUI sometimes names these differently
         % Tweak this mannually
         if length(data_channels) == 0
-            disp(['No channels named CH; tweak mannually (Lines 125,126) if needed'])
-            data_channels = all_channels(1:64);  % Look into your input folder and check that the first Nchannel files are your data files
-            adc_channels = all_channels(65);  % Check that your next channel is an adc file, or make this [] if you want to ignore it
+            disp(['No channels named CH; tweak mannually (Lines 129,130) if needed'])
+%             data_channels = all_channels(1:64);  % Look into your input folder and check that the first Nchannel files are your data files
+            data_channels = {'100_15.continuous', '100_16.continuous', '100_17.continuous', '100_18.continuous'};
+            adc_channels = [];  % Check that your next channel is an adc file, or make this [] if you want to ignore it
         end
 
         

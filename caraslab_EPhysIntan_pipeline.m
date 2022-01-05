@@ -67,7 +67,27 @@ badchannels = [];
 % Probetype = 'NNoptrodeLin4';
 % badchannels = []; 
 
+% 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-175';
+% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-175'; 
+% Probetype = 'NNoptrodeLin4';
+% badchannels = [1]; 
 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-109';
+% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-109'; 
+% Probetype = 'NNoptrodeTet4';
+% badchannels = []; 
+% 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-176';
+% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-176'; 
+% Probetype = 'NNoptrodeTet4';
+% badchannels = []; 
+
+% 154's shock training was with intan
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
 
 
 chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
@@ -178,6 +198,7 @@ caraslab_kilosort(Savedir, rootH)
 % py_code_folder = '/home/matheus/Documents/caraslab-spikesortingKS2-master/sortingQuality-master/helpers';
 % id_noise_templates_wrapper(Savedir, 1, 1, py_code_folder)
 
+
 %% 10. REMOVE DOUBLE-COUNTED SPIKES
 % This function removes potential double-counted spikes detected by
 % kilosort within one cluster and among clusters of the same shank (spikes within 0.15 ms are deleted)
@@ -186,8 +207,7 @@ caraslab_kilosort(Savedir, rootH)
 
 % WARNING: setting this to 1 resets cluster numbers and messes up previous sorting
 %               but restores original KS output
-reload_original_npys = 0;  
-
+reload_original_npys = 0;
 remove_double_counted_spikes(Savedir, reload_original_npys)
 
 
@@ -221,7 +241,8 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 % again
 show_plots = 1;
 filter_300hz = 0;
-plot_unit_shanks(Savedir, show_plots, filter_300hz)
+load_previous_gwfparams = 1;
+plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
 
 %% 14. QUALITY METRICS
@@ -237,20 +258,62 @@ plot_unit_shanks(Savedir, show_plots, filter_300hz)
 % Adapted from the Allen Brain Institute github
 show_plots = 1;
 filter_300hz = 0;
-cluster_quality_metrics(Savedir, show_plots, filter_300hz)
+load_previous_gwfparams = 1;
+cluster_quality_metrics(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
 
-%% 15. PCA COMPARISONS BETWEEN DAYS
-% Not currently in use; needs to be tweaked
-% This function loops through recording folders and compares waveforms between
-% consecutive days if they occured on the same shank. The output is a plot 
-% showing the compared waveforms and the correlations between the PC scores 
-% up to the 3rd PC. It also outputs a csv file per comparison with the PC scores.
-% show_plots = 1;
-% filter_300hz = 0;
-% pca_compare_waveforms(Savedir, show_plots, filter_300hz)
+%% 15. UNIT TRACKING ACROSS DAYS
+% This function implements an algorithm to detect unit survival across
+% recording days from Fraser et al., 2011
+% Only phy-good clusters are used
+% You will need to compile relativeHist.c first
+% The gist of the approach: 
+% 1. Compare units within and between consecutive days using 4 metrics: 
+%   a) autocorrelograms: computeDailyAutocorrelations.m
+%   b) baseline firing: computeDailyBaserates.m
+%   c) cross-correlograms: computeDailyCorrelations.m
+%   d) waveform similarity: computeWaveScore.m
+% 2. Define potential-same and definite-different unit groups by using a
+% physical criterion such as different channel (original publication) or
+% different shank (here)
+% 3. Use the 4 scores to iteratively train a quadratic discriminant classifier using
+% partially supervised expectation-maximization to fit a mixture of Gaussian models
+% Essentially, we use the definite-different units (hard label) to dictate
+% the shape of one of the Gaussian distributions and the classifier
+% computes a 4-dimensional decision boundary to segregate the other
+%
+% Many modifications were done to their code to adapt their algorithm
+% originally developed for tetrode recordings.
+% Modifications are the following:
+%   1. Waveforms on the same probe shank are treated as potential-same.
+%   2. Recording duration adapts to noise removal information at the
+%   beginning of recordings from the TDT recording system. Important in computeDailyBaserates
+%   3. Probe geometry is a key factor in computeWaveScore. Waveforms are
+%   compared between and across all channels (e.g. 16x16 comparisons in a 16ch shank)
+%   In these, I implemented a weighted Euclidean distance to confer more
+%   weight to comparisons between closer channels and maximum weight to
+%   same-channel comparisons
 
-%% 16. Extract data for batch analyses
+% IMPORTANT: This code cannot be trusted 100% yet; After running, make sure to
+% inspect every waveform survival plot and make manual changes to the
+% unitSurvival.csv file (i.e., change a unit's new survival code) if you find
+% spurious grouping
+
+show_plots = 1;
+filter_300hz = 0;
+load_previous_gwfparams = 1;
+fraser_unit_tracker_wrapper(Savedir, show_plots, filter_300hz, load_previous_gwfparams, chanMap)
+
+%% 16. PCA ACROSS DAYS
+% This function loops through recording folders and compares waveforms.
+% Option to compare firing rates and autocorrelograms between
+% consecutive days if they occured on the same shank.
+show_plots = 1;
+filter_300hz = 0;
+load_previous_gwfparams = 1;
+wf_pca_across_days(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
+
+%% 17. Extract and compile data for batch analyses into parent directory
 % This function loops through recording folders and extracts all relevant
 % files into a folder called Data inside the parent directory. The purpose
 % is to centralize all subjects' data into common directories

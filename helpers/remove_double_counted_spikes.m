@@ -93,6 +93,12 @@ function remove_double_counted_spikes(Savedir, restore_original_npys_first)
             restore_original_npys(cur_savedir, rez);
         end
         
+        % Check if there are any sorting files; exit if not
+        sorting_files = dir(fullfile(cur_savedir, '*.npy'));
+        if isempty(sorting_files)
+            fprintf('No files found for: %s\n', cur_savedir)
+            continue
+        end
         
         % Read in npy files
         spike_times = readNPY(fullfile(cur_savedir, 'spike_times.npy'));

@@ -40,22 +40,22 @@
 
 
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
-
-% Tankdir = '/mnt/CL_4TB_1/TDT tank/SUBJ-ID-197-210212-153532';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
-% Probetype = 'NNA4x16Lin64';
-% badchannels = [1:5, 33, 35, 37, 55, 61, 64];
 % 
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [1:5, 33, 35, 37, 55, 61, 64];
+% % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-151-210430-165127';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [33, 35, 37, 55, 61, 64];
 % %  
-% 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [33, 35, 37, 55, 61, 64];
+% % 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [33, 35, 37, 55, 61, 64];
 
 % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';
@@ -227,7 +227,8 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 % again
 show_plots = 1;
 filter_300hz = 0;
-plot_unit_shanks(Savedir, show_plots, filter_300hz)
+load_previous_gwfparams = 1;
+plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
 
 %% 15. QUALITY METRICS
@@ -243,18 +244,62 @@ plot_unit_shanks(Savedir, show_plots, filter_300hz)
 % Adapted from the Allen Brain Institute github
 show_plots = 1;
 filter_300hz = 0;
-cluster_quality_metrics(Savedir, show_plots, filter_300hz)
+load_previous_gwfparams = 1;
+cluster_quality_metrics(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
-%% 16. PCA COMPARISONS BETWEEN DAYS
-% This function loops through recording folders and compares waveforms between
-% consecutive days if they occured on the same shank. The output is a plot 
-% showing the compared waveforms and the correlations between the PC scores 
-% up to the 3rd PC. It also outputs a csv file per comparison with the PC scores.
+
+%% 16. UNIT TRACKING ACROSS DAYS
+% This function implements an algorithm to detect unit survival across
+% recording days from Fraser et al., 2011
+% Only phy-good clusters are used
+% You will need to compile relativeHist.c first
+% The gist of the approach: 
+% 1. Compare units within and between consecutive days using 4 metrics: 
+%   a) autocorrelograms: computeDailyAutocorrelations.m
+%   b) baseline firing: computeDailyBaserates.m
+%   c) cross-correlograms: computeDailyCorrelations.m
+%   d) waveform similarity: computeWaveScore.m
+% 2. Define potential-same and definite-different unit groups by using a
+% physical criterion such as different channel (original publication) or
+% different shank (here)
+% 3. Use the 4 scores to iteratively train a quadratic discriminant classifier using
+% partially supervised expectation-maximization to fit a mixture of Gaussian models
+% Essentially, we use the definite-different units (hard label) to dictate
+% the shape of one of the Gaussian distributions and the classifier
+% computes a 4-dimensional decision boundary to segregate the other
+%
+% Many modifications were done to their code to adapt their algorithm
+% originally developed for tetrode recordings.
+% Modifications are the following:
+%   1. Waveforms on the same probe shank are treated as potential-same.
+%   2. Recording duration adapts to noise removal information at the
+%   beginning of recordings from the TDT recording system. Important in computeDailyBaserates
+%   3. Probe geometry is a key factor in computeWaveScore. Waveforms are
+%   compared between and across all channels (e.g. 16x16 comparisons in a 16ch shank)
+%   In these, I implemented a weighted Euclidean distance to confer more
+%   weight to comparisons between closer channels and maximum weight to
+%   same-channel comparisons
+
+% IMPORTANT: This code cannot be trusted 100% yet; After running, make sure to
+% inspect every waveform survival plot and make manual changes to the
+% unitSurvival.csv file (i.e., change a unit's new survival code) if you find
+% spurious grouping
+
 show_plots = 1;
 filter_300hz = 0;
-pca_compare_waveforms(Savedir, show_plots, filter_300hz)
+load_previous_gwfparams = 1;
+fraser_unit_tracker_wrapper(Savedir, show_plots, filter_300hz, load_previous_gwfparams, chanMap)
 
-%% 17. Extract data for batch analyses
+%% 17. PCA ACROSS DAYS
+% This function loops through recording folders and compares waveforms.
+% Option to compare firing rates and autocorrelograms between
+% consecutive days if they occured on the same shank.
+show_plots = 1;
+filter_300hz = 0;
+load_previous_gwfparams = 1;
+wf_pca_across_days(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
+
+%% 18. Extract and compile data for batch analyses into parent directory
 % This function loops through recording folders and extracts all relevant
 % files into a folder called Data inside the parent directory. The purpose
 % is to centralize all subjects' data into common directories

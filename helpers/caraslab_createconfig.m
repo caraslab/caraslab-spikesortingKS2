@@ -113,7 +113,7 @@ for i = 1:numel(datafolders)
     ops.comb = 1;  % Comb filter before highpass
     
     ops.rm_artifacts = 1;  % Remove super high amplitude events
-    ops.std_threshold = 50;
+    ops.std_threshold = 25;  % Threshold for artifact rejection (50)
     
     ops.Nchan = ops.NchanTOT - numel(badchannels);              %number of active channels
 
@@ -153,7 +153,7 @@ for i = 1:numel(datafolders)
         
     %% danger, changing these settings can lead to fatal errors; Edit  if you know what you're doing
     % options for determining PCs
-    ops.spkTh           = -6;      % spike threshold in standard deviations (-6)
+    ops.spkTh           = -2.5;      % spike threshold in standard deviations (-6)
     ops.reorder         = 1;       % whether to reorder batches for drift correction. 
     ops.nskip           = 25;  % how many batches to skip for determining spike PCs
 

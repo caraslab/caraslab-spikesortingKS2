@@ -89,10 +89,10 @@ for i = 1:numel(datafolders)
         
 
         % RMS detection of bad channels
-        goodchannels_by_batch(:, ibatch) = caraslab_rms_badChannels(buff, 0);
+        goodchannels_by_batch(:, ibatch) = caraslab_rms_badChannels(buff);
 
-        % The TDT outputs a very small amplitude. After visual inspection,
-        % multiplying it by this 30k gain factor works very well.
+        % TDT outputs a very small amplitude. After visual inspection,
+        % multiplying it by this 30k gain factor works very well with kilosort.
         fwrite(fid, buff(:)*30000, 'int16'); 
         
         % Update last line in console as a poor-man's progress bar
