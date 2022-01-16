@@ -126,9 +126,8 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         % Tweak this mannually
         if length(data_channels) == 0
             disp(['No channels named CH; tweak mannually (Lines 129,130) if needed'])
-%             data_channels = all_channels(1:64);  % Look into your input folder and check that the first Nchannel files are your data files
-            data_channels = {'100_15.continuous', '100_16.continuous', '100_17.continuous', '100_18.continuous'};
-            adc_channels = [];  % Check that your next channel is an adc file, or make this [] if you want to ignore it
+            data_channels = all_channels(1:64);  % Look into your input folder and check that the first Nchannel files are your data files
+            adc_channels = all_channels(65);  % Check that your next channel is an adc file, or make this [] if you want to ignore it
         end
 
         
@@ -205,13 +204,13 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         epData.event_states = info.eventId;
         epData.timestamps = timestamps - data_timestamps(1); % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
-        
-        block_timestamp = split(cur_path.name, '_');
-        block_date_timestamp = [block_timestamp{1} '_' block_timestamp{2}];
-        block_date_timestamp = datevec(block_date_timestamp, 'yyyy-mm-dd_HH-MM-SS');
+                
+        % Grab date and timestamp from info
+        block_date_timestamp = info.header.date_created;
+        block_date_timestamp = datevec(block_date_timestamp, 'dd-mmm-yyyy HH:MM:SS');
         epData.info.StartTime = block_date_timestamp;  % TDT-like
         
-        save(events_filename, 'epData','-v7.3')
+        save(events_filename, 'epData','-v7.3');
         
         % Output each channel with events as separate csv with onset,
         % offset and duration
@@ -347,13 +346,13 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         epData.event_ids = dac_data.ChannelIndex;  % convert to 1-base index
         epData.timestamps = double(dac_data.Timestamps - all_data.Timestamps(1)) / dac_data.Header.sample_rate; % Zero TTL timestamps based on the first sampled data  time
         epData.info.blockname = cur_path.name;
-        
-        block_timestamp = split(cur_path.name, '_');
-        block_date_timestamp = [block_timestamp{1} '_' block_timestamp{2}];
-        block_date_timestamp = datevec(block_date_timestamp, 'yyyy-mm-dd_HH-MM-SS');
+               
+        % Grab date and timestamp from info
+        block_date_timestamp = info.header.date_created;
+        block_date_timestamp = datevec(block_date_timestamp, 'dd-mmm-yyyy HH:MM:SS');
         epData.info.StartTime = block_date_timestamp;  % TDT-like
         
-        save(events_filename, 'epData','-v7.3')
+        save(events_filename, 'epData','-v7.3');
         
         % Output each channel with events as separate csv with onset,
         % offset and duration
@@ -400,7 +399,5 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
             end
             fclose(fileID);
         end
-        
     end
-
 end
