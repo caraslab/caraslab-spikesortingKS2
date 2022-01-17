@@ -288,17 +288,17 @@ function fraser_unit_tracker_wrapper(Savedir, show_plots, bp_filter, load_previo
                         end
                     end
                 end
-
-                axis off;
-                legend(cax_list, TT(TT.Survival_ID == cur_ID,:).Cluster, 'Interpreter', 'none', 'Position', [0.1 0.1 0.15 0.1], 'Box', 'off');
-                % Save plot
-                screen_size = get(0, 'ScreenSize');
-                set(gcf, 'Position', [0 0 screen_size(3) screen_size(4)] ); %set to scren size
-                set(gcf,'PaperPositionMode','auto') %set paper pos for printing
-                print(fullfile(Savedir, 'Unit tracking', ...
-                    ['survival_wfs_' TT(TT.Survival_ID == cur_ID,:).Cluster{1} '_ID' ...
-                    int2str(surviving_indices(surviving_indices_iid))]), '-dpdf', '-bestfit', '-painters');
             end
+
+            axis off;
+            legend(cax_list, TT(TT.Survival_ID == cur_ID,:).Cluster, 'Interpreter', 'none', 'Position', [0.1 0.1 0.15 0.1], 'Box', 'off');
+            % Save plot
+            screen_size = get(0, 'ScreenSize');
+            set(gcf, 'Position', [0 0 screen_size(3) screen_size(4)] ); %set to scren size
+            set(gcf,'PaperPositionMode','auto') %set paper pos for printing
+            print(fullfile(Savedir, 'Unit tracking', ...
+                ['survival_wfs_' TT(TT.Survival_ID == cur_ID,:).Cluster{1} '_ID' ...
+                int2str(surviving_indices(surviving_indices_iid))]), '-dpdf', '-bestfit', '-painters');
         end
     end
 end
