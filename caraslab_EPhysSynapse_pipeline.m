@@ -41,10 +41,10 @@
 
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [1:5, 33, 35, 37, 55, 61, 64];
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [1:5, 33, 35, 37, 55, 61, 64];
 % % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-151-210430-165127';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
@@ -52,10 +52,10 @@ badchannels = [1:5, 33, 35, 37, 55, 61, 64];
 % badchannels = [33, 35, 37, 55, 61, 64];
 % %  
 % % 
-% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
-% Probetype = 'NNA4x16Lin64';
-% badchannels = [33, 35, 37, 55, 61, 64];
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [33, 35, 37, 55, 61, 64];
 
 % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';

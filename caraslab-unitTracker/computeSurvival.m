@@ -8,6 +8,8 @@ function [survival, score] = computeSurvival(shank, unit, corrscore, wavescore, 
     end
 
     data = [unroll(corrscore) unroll(wavescore) unroll(autoscore) unroll(basescore)];
+%     data = [unroll(corrscore) unroll(wavescore) unroll(autoscore)];
+    
     good = ~isnan(sum(data));
     fprintf('Using %d classifiers, %d others are nan\n',sum(good),sum(~good));
     % Remove missing classifiers
