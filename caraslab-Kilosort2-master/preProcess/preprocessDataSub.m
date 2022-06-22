@@ -53,7 +53,8 @@ end
 % For some reason, Kilosort2 works better when NOT excluding bad channels;
 % Therefore, revert that exclusion here. The pipeline somewhat handles this by
 % changing bad channels into gaussian noise before running kilosort
-igood = true(size(chanMap));  
+% Comment this out if you want to remove bad channels
+% igood = true(size(chanMap)); 
 
 chanMap = chanMap(igood); %it's enough to remove bad channels from the channel map, which treats them as if they are dead
 

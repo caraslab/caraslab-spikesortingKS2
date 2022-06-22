@@ -51,9 +51,14 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
         fprintf('Outputting timestamps and measuring waveforms for: %s\n', cur_savedir)
 
         % Delete old timestamp files in folder
-        old_timestamps = dir([cur_savedir '/*cluster*txt']);
-        for i=1:numel(old_timestamps)
-            delete(fullfile(old_timestamps(i).folder, old_timestamps(i).name));
+        old_files = dir([cur_savedir '/*cluster*txt']);
+        for i=1:numel(old_files)
+            delete(fullfile(old_files(i).folder, old_files(i).name));
+        end
+        
+        old_files = dir(fullfile(cur_savedir, 'CSV files', '*_waveforms.csv'));
+        for dummy_idx=1:numel(old_files)
+            delete(fullfile(old_files(dummy_idx).folder, old_files(dummy_idx).name));
         end
         
         %% Define I/O and waveform parameters
@@ -220,10 +225,6 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
             
             %% Write spike waveforms to csv file
             % Delete old files first
-            old_timestamps = dir(fullfile(gwfparams.dataDir, 'CSV files', '*_waveforms.csv'));
-            for dummy_idx=1:numel(old_timestamps)
-                delete(fullfile(old_timestamps(dummy_idx).folder, old_timestamps(dummy_idx).name));
-            end
             fprintf('Outputting spike waveforms to csv file\n')
             writetable(array2table(cur_wfs), fullfile(gwfparams.dataDir, 'CSV files', ...
                 [prename '_cluster' int2str(cluster_phy_id) '_waveforms.csv']));

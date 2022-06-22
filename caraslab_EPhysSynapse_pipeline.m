@@ -220,7 +220,7 @@ filter_300hz = 0;
 get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 
 
-%% 14. EXTRACT WAVEFORMS PLOTS WITH PROBE GEOMETRY
+%% 14. EXTRACT WAVEFORMS PLOTS WITH PROBE GEOMETRY AND AUTOCORRELOGRAMS
 % This function reads the probe geometry in channel map and outputs the
 % spike means and SEM organized in space in a pdf. If filter_300hz==0, it will
 % search for the 300hz bandpass filtered file. Otherwise, it will filter
@@ -228,8 +228,14 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 show_plots = 1;
 filter_300hz = 0;
 load_previous_gwfparams = 1;
-plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
+plot_mean = 0;
+plot_wf_samples = 1;
+plot_std = 0;
+plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams, ...
+    plot_mean, plot_std, plot_wf_samples)
 
+%%
+plot_autocorrelograms(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
 %% 15. QUALITY METRICS
 % This function runs 3 quality control metrics on the curated clusters:

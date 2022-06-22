@@ -92,6 +92,7 @@ function fraser_unit_tracker_wrapper(Savedir, show_plots, bp_filter, load_previo
     unitnames = {};
     spiketimes = {};
     wmean = {};
+    wfs = {};
     gwfparamses = {};
     allShankChan_wfmeans = {};
     shank_channelses = {};
@@ -125,12 +126,15 @@ function fraser_unit_tracker_wrapper(Savedir, show_plots, bp_filter, load_previo
         day_unitIDs = {};
         day_spiketimes = {};
         day_wfmeans = {};
+        day_wfs = {};
         day_gwfparams = {};
         day_allShankChan_wfmeans = {};
         day_shank_channels = {};
         for wf_idx=1:length(wf.unitIDs)
+            cur_wfs = wf.waveForms(wf_idx, :, :,:);
             % Normalize wfs around 0 and so that peak is at -1 or 1
-            [~, day_cur_wf_mean, day_shank, allShankChan_wfmean, shank_channels] = normalize_wfs(wf, gwfparams, wf_idx);
+            [day_cur_wfs, day_cur_wf_mean, day_shank, allShankChan_wfmean, shank_channels, ] = normalize_wfs(wf, gwfparams, wf_idx);
+            day_wfs{end+1} = day_cur_wfs;
             day_shanks(end+1) = day_shank;
             day_units(end+1) = wf_idx;
             day_unitIDs{end+1} = [prename '_cluster' int2str(wf.unitIDs(wf_idx))];
@@ -146,6 +150,7 @@ function fraser_unit_tracker_wrapper(Savedir, show_plots, bp_filter, load_previo
         unitnames{end+1} = day_unitIDs;
         spiketimes{end+1} = day_spiketimes;
         wmean{end+1} = day_wfmeans;
+        wfs{end+1} = day_wfs;
         gwfparamses{end+1} = day_gwfparams;
         allShankChan_wfmeans{end+1} = day_allShankChan_wfmeans;
         shank_channelses{end+1} = day_shank_channels;
@@ -161,7 +166,7 @@ function fraser_unit_tracker_wrapper(Savedir, show_plots, bp_filter, load_previo
     end
     
     %% Calculate survival
-    [survival, score, corrscore, wavescore, autoscore, basescore, correlations] ...
+    [survival, score, corrscore, wavescore, autoscore, basescore, correlations, autocors] ...
         = unitIdentification(shank, unit, spiketimes, allShankChan_wfmeans, gwfparamses, shank_channelses, channel_map, 'plot');
     
     %% Continue to saving and plotting

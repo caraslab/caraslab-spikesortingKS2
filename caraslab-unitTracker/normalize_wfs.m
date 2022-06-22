@@ -1,4 +1,4 @@
-function [bestChan_wfs, bestChan_wf_mean, shank, allShankChan_wf_mean, shank_channels] = normalize_wfs(wf, gwfparams, wf_idx)
+function [normed_bestChan_wfs, bestChan_wf_mean, shank, allShankChan_wf_mean, shank_channels] = normalize_wfs(wf, gwfparams, wf_idx)
     % This function levels wfs to be around 0V and rescales so that
     % their peak is at -1 or 1
 
@@ -31,16 +31,15 @@ function [bestChan_wfs, bestChan_wf_mean, shank, allShankChan_wf_mean, shank_cha
 %     shank_channels = sort(shank_channels);
 %     
     wf_npoints = length(wf.waveFormsMean(1, 1,:));
-    
-    allShankChan_wf_mean = nan(wf_npoints, length(shank_channels_0ind));
+
     
 
     % Get best channel and all wf shapes too
     % Get waveforms at current channel
-    cur_chan_wfs = wf.waveForms(wf_idx, :, best_channel_idx,:);
-    cur_chan_wfs = squeeze(cur_chan_wfs);
+    bestChan_wfs = wf.waveForms(wf_idx, :, best_channel_idx,:);
+    bestChan_wfs = squeeze(bestChan_wfs);
     % Find and remove nan wfs
-    cur_chan_wfs(any(isnan(cur_chan_wfs), 2),:) = [];	
+    bestChan_wfs(any(isnan(bestChan_wfs), 2),:) = [];	
 
     % Normalize amplitude so that peak is at -1 or 1
     cur_chan_wf_mean = wf.waveFormsMean(wf_idx, best_channel_idx,:);
@@ -58,8 +57,11 @@ function [bestChan_wfs, bestChan_wf_mean, shank, allShankChan_wf_mean, shank_cha
 
     bestChan_wf_mean = cur_chan_wf_mean ./ peak_value;
 
-    bestChan_wfs = cur_chan_wfs ./ peak_value;
-    
+    normed_bestChan_wfs = bestChan_wfs ./ peak_value;
+        
+    allShankChan_wf_mean = nan(wf_npoints, length(shank_channels_0ind));
+    wf_samples = 100;
+    allShankChan_wfs = nan(wf_npoints, length(shank_channels_0ind), wf_samples);
     % Get means for each channel and normalize by best channel peak
     for ch_dummy_idx=1:length(shank_channels_0ind)
         cur_ch_0ind = shank_channels_0ind(ch_dummy_idx);

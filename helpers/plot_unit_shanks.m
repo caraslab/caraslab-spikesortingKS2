@@ -1,4 +1,4 @@
-function plot_unit_shanks(Savedir, show_plots, bp_filter, load_previous_gwfparams)
+function plot_unit_shanks(Savedir, show_plots, bp_filter, load_previous_gwfparams, plot_mean, plot_std, plot_wf_samples)
     % This function reads the probe geometry in channel map and outputs the
     % spike means and SEM organized in space. If filter_300hz==0, it will
     % search for the 300hz bandpass filtered file. Otherwise, it will filter
@@ -74,9 +74,9 @@ function plot_unit_shanks(Savedir, show_plots, bp_filter, load_previous_gwfparam
         good_cluster_idx = wf.unitIDs; % store their Phy IDs
 
         % Delete old plots in folder
-        old_timestamps = dir([cur_savedir '/*shankWaveforms*pdf']);
-        for dummy_idx=1:numel(old_timestamps)
-            delete(fullfile(old_timestamps(dummy_idx).folder, old_timestamps(dummy_idx).name));
+        old_files = dir([cur_savedir '/*shankWaveforms*pdf']);
+        for dummy_idx=1:numel(old_files)
+            delete(fullfile(old_files(dummy_idx).folder, old_files(dummy_idx).name));
         end
         
         %% Plot
@@ -167,25 +167,32 @@ function plot_unit_shanks(Savedir, show_plots, bp_filter, load_previous_gwfparam
 
                 hold on
                 
-%               If you want to output individual spikes around the mean instead of SEM
-%                 for spike_idx=1:min(size(cur_wfs, 1), 100)  % plot a max of 50 spikes
-%                     cur_wf = cur_wfs(spike_idx,:);
-%                     if isnan(mean(cur_wfs(spike_idx, 1:5)))
-%                         continue  % sometimes waveforms are NaN which is weird...
-%                     end
-%                     % Normalize amplitude of individual spike using the average
-%                     cur_wf = cur_wf ./ norm_peak_value;
-% 
-%                     cax = plot(x_time + x_offset, cur_wf + y_offset, 'black'); % Plot 0-centered traces
-%                     cax.Color(4)=0.1;
-%                 end
+                if plot_wf_samples
+                  % If you want to output individual spikes around the mean instead of SEM
+                    for spike_idx=1:min(size(cur_wfs, 1), 50)  % plot a max of 50 spikes
+                        cur_wf = cur_wfs(spike_idx,:);
+                        if isnan(mean(cur_wfs(spike_idx, 1:5)))
+                            continue  % sometimes waveforms are NaN which is weird...
+                        end
+                        % Normalize amplitude of individual spike using the average
+                        cur_wf = cur_wf ./ norm_peak_value;
+
+                        cax = plot(x_time + x_offset, cur_wf + y_offset, 'black'); % Plot 0-centered traces
+                        cax.Color(4)=0.1;
+                    end
+                end
                 
-                std_patch_top = (cur_wf_mean_upsample + cur_wf_std_upsample) + y_offset;
-                std_patch_bottom = (cur_wf_mean_upsample - cur_wf_std_upsample) + y_offset ;
-                patch_cax = patch([upsampled_x_time + x_offset fliplr(upsampled_x_time + x_offset)],...
-                    [std_patch_bottom fliplr(std_patch_top)], 'black', 'EdgeColor','none');
-                patch_cax.FaceAlpha=0.3;
-                plot(upsampled_x_time + x_offset, cur_wf_mean_upsample + y_offset, 'black', 'linewidth', 0.5);
+                if plot_std
+                    std_patch_top = (cur_wf_mean_upsample + cur_wf_std_upsample) + y_offset;
+                    std_patch_bottom = (cur_wf_mean_upsample - cur_wf_std_upsample) + y_offset ;
+                    patch_cax = patch([upsampled_x_time + x_offset fliplr(upsampled_x_time + x_offset)],...
+                        [std_patch_bottom fliplr(std_patch_top)], 'black', 'EdgeColor','none');
+                    patch_cax.FaceAlpha=0.3;
+                end
+                
+                if plot_mean
+                    plot(upsampled_x_time + x_offset, cur_wf_mean_upsample + y_offset, 'black', 'linewidth', 0.5);
+                end
             end
 
             axis off;

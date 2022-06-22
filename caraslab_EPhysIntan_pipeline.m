@@ -35,15 +35,30 @@
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 
 % OFC PL
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [];
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-231'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
 % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-232';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-232'; 
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [];
+
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-270';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-270'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
+
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-389';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-389'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
+
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-390';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-390'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [];
 
 % Acute opto
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-83';
@@ -53,7 +68,7 @@ badchannels = [];
 % % goodchannels = [17:28, 37:46, 948];
 % % badchannels = setdiff(1:64, goodchannels);  % only shank 1 and 5 good
 % badchannels = [];
-
+% 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-84';
 % Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-84'; 
 % Probetype = 'NNoptrodeLin4';
@@ -159,7 +174,8 @@ caraslab_createconfig(Savedir,chanMap, badchannels, fetch_tstart_from_behav, 'in
 % 3. Kilosort-inspired GPU-based chunkwise filter
 % 4. Chunk-wise mean-std-based artifact removal (not optimal but helps)
 % 5. Saves a filename_CLEAN.dat file
-caraslab_preprocessdat(Savedir)
+inspect_artifact_removal_only = 1;  % Beta version
+caraslab_preprocessdat(Savedir, inspect_artifact_removal_only)
 
 
 %% 6. CONCATENATE SAME DAY RECORDINGS
@@ -230,7 +246,7 @@ remove_double_counted_spikes(Savedir, reload_original_npys)
 % also refilter the data with a 300-6000Hz bandpass filter and save a new
 % ~~CLEAN300Hz.dat
 show_plots = 1;
-filter_300hz = 0;
+filter_300hz = 1;
 get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 
 
@@ -242,8 +258,7 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 show_plots = 1;
 filter_300hz = 0;
 load_previous_gwfparams = 1;
-plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
-
+plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams, 1, 1, 1)
 
 %% 14. QUALITY METRICS
 % This function runs 3 quality control metrics on the curated clusters:

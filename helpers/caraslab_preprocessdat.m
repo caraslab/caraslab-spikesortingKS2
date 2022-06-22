@@ -1,4 +1,4 @@
-function caraslab_preprocessdat(Savedir)
+function caraslab_preprocessdat(Savedir, inspect_artifact_removal_only)
 % This function takes .dat files and employs in this order:
 % 1. Comb filter (if ops.comb==1)
 % 2. Median-CAR filter (if ops.CAR==1)
@@ -53,7 +53,6 @@ for i = 1:numel(datafolders)
     % Load config paramaters
     [chanMap, ~, ~, ~, NchanTOTdefault] = loadChanMap(ops.chanMap); % function to load channel map file
     ops.NchanTOT = getOr(ops, 'NchanTOT', NchanTOTdefault); % if NchanTOT was left empty, then overwrite with the default
-    std_threshold = ops.std_threshold;
     NchanTOT = ops.NchanTOT; % total number of channels in the raw binary file, including dead, auxiliary etc
     % MML edit
     if isfield(ops, 'igood')
@@ -68,8 +67,9 @@ for i = 1:numel(datafolders)
     end
 
     
-    NT       = ops.NT ; % number of timepoints per batch
-
+%     NT       = ops.NT ; % number of timepoints per batch
+    NT = 3*ops.fs;  % Can be significantly higher than kilosort's here, but lower it if running out of RAM
+    
     bytes       = get_file_size(ops.fbinary); % size in bytes of raw binary
     nTimepoints = floor(bytes/NchanTOT/2); % number of total timepoints
     ops.tstart  = ceil(ops.trange(1) * ops.fs); % starting timepoint for processing data segment
@@ -164,11 +164,18 @@ for i = 1:numel(datafolders)
         datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
         
         if getOr(ops, 'rm_artifacts', 1)
+%             inspect_results = 1;
 %             fprintf('Removing artifacts.......\n')
 %             t0 = tic;
             warning off;
-            datr = caraslab_artifact_reject(datr, std_threshold);
+            [datr, ~, exit_flag] = caraslab_artifact_reject(datr, ops, inspect_artifact_removal_only);
             warning on;
+            if exit_flag
+                close all
+                fclose(fid);
+                fclose(fidC);
+                return
+            end
 %             tEnd = toc(t0);
 %             fprintf('Finished in: %d minutes and %f seconds\n', floor(tEnd/60),rem(tEnd,60));
         end

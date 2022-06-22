@@ -104,16 +104,16 @@ for i = 1:numel(datafolders)
         ops.trange = [tstart Inf];
     end
 
-    ops.CAR = 0;  % CAR after highpass
+    ops.CAR = 1;  % CAR after highpass (1)
     
-    ops.kilosort_filter = 0; % filter during kilosort, turned off since we're prefiltering
+    ops.kilosort_filter = 0; % filter during kilosort, turned off since we're prefiltering (0)
     
-    ops.deline = 0;  % Fails too often; use comb for now
+    ops.deline = 0;  % Fails too often; use comb for now (0)
     
-    ops.comb = 1;  % Comb filter before highpass
+    ops.comb = 1;  % Comb filter before highpass (1)
     
     ops.rm_artifacts = 1;  % Remove super high amplitude events
-    ops.std_threshold = 25;  % Threshold for artifact rejection (50)
+    ops.std_threshold = 65;  % Threshold for artifact rejection (10)
     
     ops.Nchan = ops.NchanTOT - numel(badchannels);              %number of active channels
 
@@ -139,7 +139,7 @@ for i = 1:numel(datafolders)
     % splitting a cluster at the end requires at least this much isolation for each sub-cluster (max = 1)
     ops.AUCsplit = 0.9; 
 
-    % minimum spike rate (Hz), if a cluster falls below this for too long it gets removed (1/50)
+    % minimum spike rate (Hz), if a cluster falls below this for too long it gets removed (0)
     ops.minFR = 0; 
     
     % number of samples to average over (annealed from first to second value) 
@@ -153,7 +153,7 @@ for i = 1:numel(datafolders)
         
     %% danger, changing these settings can lead to fatal errors; Edit  if you know what you're doing
     % options for determining PCs
-    ops.spkTh           = -2.5;      % spike threshold in standard deviations (-6)
+    ops.spkTh           = -6;      % spike threshold in standard deviations (-6)
     ops.reorder         = 1;       % whether to reorder batches for drift correction. 
     ops.nskip           = 25;  % how many batches to skip for determining spike PCs
 

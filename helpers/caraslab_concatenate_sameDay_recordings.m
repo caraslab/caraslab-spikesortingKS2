@@ -23,8 +23,18 @@ for i=1:length(datafolders_names)
     [~, datafolders{end+1}, ~] = fileparts(datafolders_names{i});
 end
 
+% Remove SUBJ ID from folder names
+for i = 1:length(datafolders)
+    if contains(datafolders{i}, 'SUBJ-ID')
+        subj = 1;
+        df = split(datafolders{i}, '_');
+        id = df{1};
+        datafolders{i} = append(df{2},'_',df{3},'_',df{4});
+    end
+end
 
 % Sort according to dates and times in folder names
+
 date_time = regexp(datafolders, '\d+', 'match');
 recording_dates = [];
 recording_times = [];
@@ -96,7 +106,13 @@ for day_idx=1:length(unique_days)
     t0 = tic;
     for i = 1:numel(cur_day_datafolders)
         cur_path_name = cur_day_datafolders{i};
-        cur_sourcedir = fullfile(Savedir, cur_path_name);
+        
+        if subj == 1
+            cur_path_name = append(id, '_', cur_path_name);
+            cur_sourcedir = fullfile(Savedir, cur_path_name);
+        else
+            cur_sourcedir = fullfile(Savedir, cur_path_name);
+        end
 
         %Load in configuration file (contains ops struct)
         % Catch error if -mat file is not found
