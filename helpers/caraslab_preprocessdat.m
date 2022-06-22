@@ -101,126 +101,207 @@ for i = 1:numel(datafolders)
     %Start timer
     t0 = tic;
     fprintf('Reading raw file and applying filters for file: %s\n', ops.fbinary)
-    fidC        = fopen(ops.fclean,  'w'); % MML edit; write processed data for phy
     fid         = fopen(ops.fbinary, 'r'); % open for reading raw data
     
-
-    for ibatch = 1:Nbatch
-        clear buff dataRAW datr noiseBuff
-        % we'll create a binary file of batches of NT samples, which overlap consecutively on ops.ntbuff samples
-        % in addition to that, we'll read another ops.ntbuff samples from before and after, to have as buffers for filtering
-        % MML edit: this part is weird in the original kilosort2 code so I
-        % rewrote it in a way it makes sense to me. I described the issue
-        % in the link below, and Marius (Kilosort developer) didn't 
-        % necessary think it was a bug, but my confusion remains. 
-        % https://github.com/MouseLand/Kilosort/issues/223
-        offset = max(0, ops.twind + 2*NchanTOT*(NT*(ibatch-1) - 2*ops.ntbuff)); % number of samples to start reading at.
-        if offset==0
-            ioffset = 0; % The very first batch has no pre-buffer, and has to be treated separately
-        else
-            ioffset = 2*ops.ntbuff;
-        end
-        fseek(fid, offset, 'bof'); % fseek to batch start in raw file
-
-        buff = fread(fid, [NchanTOT NTbuff], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
-
-        if isempty(buff)
-            break; % this shouldn't really happen, unless we counted data batches wrong
-        end
-
-        nsampcurr = size(buff,2); % how many time samples the current batch has
-
-        if nsampcurr<NTbuff
-            buff(:, nsampcurr+1:NTbuff) = repmat(buff(:,nsampcurr), 1, NTbuff-nsampcurr); % pad with zeros, if this is the last batch
-        end
-
-        % Finally start filtering...
-        % Can't use GPU acceleration for comb filter yet...
-        if getOr(ops, 'comb', 0)  % MML edit; comb filter
-            buff = buff';  % MML edit: transpose sooner
-            buff = filter(comb_b1, comb_a1, buff);
-            dataRAW = gpuArray(buff); % move int16 data to GPU
-        else
-            dataRAW = gpuArray(buff); % move int16 data to GPU
-            dataRAW = dataRAW';
-        end
-
-        dataRAW = single(dataRAW); % convert to float32 so GPU operations are fast
-        % subtract the mean from each channel
-        dataRAW = dataRAW - mean(dataRAW, 1); % subtract mean of each channel
-
-        % CAR, common average referencing by median
-        if getOr(ops, 'CAR', 1)
-            % MML edit:take median of good channels only
-            dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
-        end
-
-        datr = filter(b1, a1, dataRAW); % causal forward filter
-
-        datr = flipud(datr); % reverse time
-        datr = filter(b1, a1, datr); % causal forward filter again
-        datr = flipud(datr); % reverse time back
-
-        datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
-        
-        if getOr(ops, 'rm_artifacts', 1)
-%             inspect_results = 1;
-%             fprintf('Removing artifacts.......\n')
-%             t0 = tic;
-            warning off;
-            [datr, ~, exit_flag] = caraslab_artifact_reject(datr, ops, inspect_artifact_removal_only);
-            warning on;
-            if exit_flag
-                close all
-                fclose(fid);
-                fclose(fidC);
-                return
+    % Artifact removal inspection mode; nothing is saved
+    if inspect_artifact_removal_only
+        ibatch = 1;
+        cur_inspected_channel = 1;
+        while ibatch <= Nbatch
+            clear buff dataRAW datr noiseBuff
+            % we'll create a binary file of batches of NT samples, which overlap consecutively on ops.ntbuff samples
+            % in addition to that, we'll read another ops.ntbuff samples from before and after, to have as buffers for filtering
+            % MML edit: this part is weird in the original kilosort2 code so I
+            % rewrote it in a way it makes sense to me. I described the issue
+            % in the link below, and Marius (Kilosort developer) didn't 
+            % necessary think it was a bug, but my confusion remains. 
+            % https://github.com/MouseLand/Kilosort/issues/223
+            offset = max(0, ops.twind + 2*NchanTOT*(NT*(ibatch-1) - 2*ops.ntbuff)); % number of samples to start reading at.
+            if offset==0
+                ioffset = 0; % The very first batch has no pre-buffer, and has to be treated separately
+            else
+                ioffset = 2*ops.ntbuff;
             end
-%             tEnd = toc(t0);
-%             fprintf('Finished in: %d minutes and %f seconds\n', floor(tEnd/60),rem(tEnd,60));
-        end
-        
-        datr = datr';
-        
-        % Convert noisy parts in the beginning of file (before ops.tstart)
-        % to gaussian noise using the
-        % median and std of the first batch
-        % This prevents kilosort from getting biased by the higher noise
-        % band in those often long parts
-        if ibatch == 1
-            if ops.tstart > 0
-                % Gather on CPU side right away because GPU might run out
-                % of memory
+            fseek(fid, offset, 'bof'); % fseek to batch start in raw file
+
+            buff = fread(fid, [NchanTOT NTbuff], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
+
+            if isempty(buff)
+                break; % this shouldn't really happen, unless we counted data batches wrong
+            end
+
+            nsampcurr = size(buff,2); % how many time samples the current batch has
+
+            if nsampcurr<NTbuff
+                buff(:, nsampcurr+1:NTbuff) = repmat(buff(:,nsampcurr), 1, NTbuff-nsampcurr); % pad with zeros, if this is the last batch
+            end
+
+            % Finally start filtering...
+            % Can't use GPU acceleration for comb filter yet...
+            if getOr(ops, 'comb', 0)  % MML edit; comb filter
+                buff = buff';  % MML edit: transpose sooner
+                buff = filter(comb_b1, comb_a1, buff);
+                dataRAW = gpuArray(buff); % move int16 data to GPU
+            else
+                dataRAW = gpuArray(buff); % move int16 data to GPU
+                dataRAW = dataRAW';
+            end
+
+            dataRAW = single(dataRAW); % convert to float32 so GPU operations are fast
+            % subtract the mean from each channel
+            dataRAW = dataRAW - mean(dataRAW, 1); % subtract mean of each channel
+
+            % CAR, common average referencing by median
+            if getOr(ops, 'CAR', 1)
+                % MML edit:take median of good channels only
+                dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
+            end
+
+            datr = filter(b1, a1, dataRAW); % causal forward filter
+
+            datr = flipud(datr); % reverse time
+            datr = filter(b1, a1, datr); % causal forward filter again
+            datr = flipud(datr); % reverse time back
+
+            datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
+
+            if getOr(ops, 'rm_artifacts', 1)
+    %             inspect_results = 1;
+    %             fprintf('Removing artifacts.......\n')
+    %             t0 = tic;
+                warning off;
+                [~, ~, next_operation_flag, cur_inspected_channel] = ... 
+                    caraslab_artifact_reject(datr, ops, inspect_artifact_removal_only, cur_inspected_channel);
+                warning on;
+                if next_operation_flag == 2
+                    close all
+                    fclose(fid);
+                    break
+                end
                 
-                % take median of medians of good channels
-                first_median = gather(double(median(median(datr(chanMap(igood), :), 2))));
-                % take median std of good channels
-                first_std = gather(double(median(std(datr(chanMap(igood), :), [], 2))));
-                fseek(fid, 0, 'bof'); % fseek to batch start in raw file
-                noiseBuff = fread(fid, [NchanTOT ops.tstart-1], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
-                
-                noiseBuff =  first_std*randn(size(noiseBuff)) + first_median;
-                fwrite(fidC, noiseBuff, 'int16'); % write this batch to clean file
+                if next_operation_flag == 1
+                    ibatch = ibatch - 1;
+                    if ibatch <= 0
+                        ibatch = 1;
+                    end
+                else
+                    ibatch = ibatch + 1;
+                    if ibatch >= Nbatch
+                        ibatch = Nbatch;
+                    end
+                end
             end
         end
-        
-        % Convert noisy channels to gaussian noise
-        
-        % take median of medians of good channels
-        cur_median = gather(double(median(median(datr(chanMap(igood), :), 2))));
-        % take median std of good channels
-        cur_std = gather(double(median(std(datr(chanMap(igood), :), [], 2))));
-        
-        datr(chanMap(~igood), :) = gpuArray(cur_std*randn(sum(~igood), size(datr, 2)) + cur_median);
 
-        datr  = gather(int16(datr)); % convert to int16, and gather on the CPU side
-        
-        fwrite(fidC, datr, 'int16'); % write this batch to clean file
+	% Preprocessing mode; ops.fclean is saved
+    else
+        fidC        = fopen(ops.fclean,  'w'); % MML edit; write processed data for phy
+        for ibatch = 1:Nbatch
+            clear buff dataRAW datr noiseBuff
+            % we'll create a binary file of batches of NT samples, which overlap consecutively on ops.ntbuff samples
+            % in addition to that, we'll read another ops.ntbuff samples from before and after, to have as buffers for filtering
+            % MML edit: this part is weird in the original kilosort2 code so I
+            % rewrote it in a way it makes sense to me. I described the issue
+            % in the link below, and Marius (Kilosort developer) didn't 
+            % necessary think it was a bug, but my confusion remains. 
+            % https://github.com/MouseLand/Kilosort/issues/223
+            offset = max(0, ops.twind + 2*NchanTOT*(NT*(ibatch-1) - 2*ops.ntbuff)); % number of samples to start reading at.
+            if offset==0
+                ioffset = 0; % The very first batch has no pre-buffer, and has to be treated separately
+            else
+                ioffset = 2*ops.ntbuff;
+            end
+            fseek(fid, offset, 'bof'); % fseek to batch start in raw file
+
+            buff = fread(fid, [NchanTOT NTbuff], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
+
+            if isempty(buff)
+                break; % this shouldn't really happen, unless we counted data batches wrong
+            end
+
+            nsampcurr = size(buff,2); % how many time samples the current batch has
+
+            if nsampcurr<NTbuff
+                buff(:, nsampcurr+1:NTbuff) = repmat(buff(:,nsampcurr), 1, NTbuff-nsampcurr); % pad with zeros, if this is the last batch
+            end
+
+            % Finally start filtering...
+            % Can't use GPU acceleration for comb filter yet...
+            if getOr(ops, 'comb', 0)  % MML edit; comb filter
+                buff = buff';  % MML edit: transpose sooner
+                buff = filter(comb_b1, comb_a1, buff);
+                dataRAW = gpuArray(buff); % move int16 data to GPU
+            else
+                dataRAW = gpuArray(buff); % move int16 data to GPU
+                dataRAW = dataRAW';
+            end
+
+            dataRAW = single(dataRAW); % convert to float32 so GPU operations are fast
+            % subtract the mean from each channel
+            dataRAW = dataRAW - mean(dataRAW, 1); % subtract mean of each channel
+
+            % CAR, common average referencing by median
+            if getOr(ops, 'CAR', 1)
+                % MML edit:take median of good channels only
+                dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
+            end
+
+            datr = filter(b1, a1, dataRAW); % causal forward filter
+
+            datr = flipud(datr); % reverse time
+            datr = filter(b1, a1, datr); % causal forward filter again
+            datr = flipud(datr); % reverse time back
+
+            datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
+
+            if getOr(ops, 'rm_artifacts', 1)
+                warning off;
+                [datr, ~, ~] = caraslab_artifact_reject(datr, ops, inspect_artifact_removal_only);
+                warning on;
+            end
+
+            datr = datr';
+
+            % Convert noisy parts in the beginning of file (before ops.tstart)
+            % to gaussian noise using the
+            % median and std of the first batch
+            % This prevents kilosort from getting biased by the higher noise
+            % band in those often long parts
+            if ibatch == 1
+                if ops.tstart > 0
+                    % Gather on CPU side right away because GPU might run out
+                    % of memory
+
+                    % take median of medians of good channels
+                    first_median = gather(double(median(median(datr(chanMap(igood), :), 2))));
+                    % take median std of good channels
+                    first_std = gather(double(median(std(datr(chanMap(igood), :), [], 2))));
+                    fseek(fid, 0, 'bof'); % fseek to batch start in raw file
+                    noiseBuff = fread(fid, [NchanTOT ops.tstart-1], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
+
+                    noiseBuff =  first_std*randn(size(noiseBuff)) + first_median;
+                    fwrite(fidC, noiseBuff, 'int16'); % write this batch to clean file
+                end
+            end
+
+            % Convert noisy channels to gaussian noise
+
+            % take median of medians of good channels
+            cur_median = gather(double(median(median(datr(chanMap(igood), :), 2))));
+            % take median std of good channels
+            cur_std = gather(double(median(std(datr(chanMap(igood), :), [], 2))));
+
+            datr(chanMap(~igood), :) = gpuArray(cur_std*randn(sum(~igood), size(datr, 2)) + cur_median);
+
+            datr  = gather(int16(datr)); % convert to int16, and gather on the CPU side
+
+            fwrite(fidC, datr, 'int16'); % write this batch to clean file
+        end
+        fclose(fid); % close the files
+        fclose(fidC);
+
+        tEnd = toc(t0);
+        fprintf('Done in: %d minutes and %f seconds\n', floor(tEnd/60), rem(tEnd,60));
     end
-    fclose(fid); % close the files
-    fclose(fidC);
-
-    tEnd = toc(t0);
-    fprintf('Done in: %d minutes and %f seconds\n', floor(tEnd/60), rem(tEnd,60));
     
 end

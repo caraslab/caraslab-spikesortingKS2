@@ -1,4 +1,4 @@
-function [signal, thresholds, exit_flag] = caraslab_artifact_reject(signal, ops, inspect_results)
+function [signal, thresholds, next_operation_flag, cur_inspected_channel] = caraslab_artifact_reject(signal, ops, inspect_results, cur_inspected_channel)
 warning('off','all')
 %[finalsignal,rejectthresh] = caraslab_artifact_reject(rawsignal,fs)
 %
@@ -33,6 +33,10 @@ warning('off','all')
 %
 % Written by ML Caras Apr 1 2019
 
+if nargin < 4
+    cur_inspected_channel = 1;
+end
+
 %Determine the number of channels
 numchans = ops.NchanTOT;
 
@@ -49,7 +53,11 @@ backup_signal = signal;
 % Threshold in multiples of std
 std_threshold = ops.std_threshold;
 
-exit_flag = 0;
+% next_operation_flag is only used during inspection mode:
+% 0 = next chunk
+% 1 = previous chung
+% 2 = exit inspection mode
+next_operation_flag = 0;
 
 
 %---------------------------------------------------------------------
@@ -63,7 +71,7 @@ exit_flag = 0;
 [signal, thresholds] = rm_artifacts(signal,numchans, win, std_threshold);
 
 if inspect_results
-    [new_threshold, exit_flag] = inspect_plot(backup_signal, signal, thresholds, ops);
+    [new_threshold, next_operation_flag, cur_inspected_channel] = inspect_plot(backup_signal, signal, thresholds, ops, cur_inspected_channel);
     
     fprintf('New threshold chosen: %f. Change the config file and rerun caraslab_preprocessdat with inspect_results = 0 to apply it\n', new_threshold)
 end
@@ -138,27 +146,31 @@ function [ret_sig, thresh] = rm_artifacts(sig,numchans,win, std_threshold)
 end
 
 
-function [new_threshold, exit_flag] = inspect_plot(sig, clean_sig, thresholds, ops)
+function [cur_threshold, next_operation_flag, channel_to_plot] = inspect_plot(sig, clean_sig, thresholds, ops, cur_inspected_channel)
     % Decimate for faster visualization?
     
     cur_threshold = ops.std_threshold;
-    exit_flag = 0;
+    next_operation_flag = 0;
     time_vec = linspace(0, size(sig, 1)/ops.fs, size(sig, 1));
     
+    cla;
     f = gcf;
-    set(f, 'Position', get(0, 'Screensize')/2);
+%     set(f, 'Position', get(0, 'Screensize'));
+    pause(0.00001);
+    frame_h = get(handle(gcf),'JavaFrame');
+    set(frame_h,'Maximized',1);
     
     hold on;
-    channel_to_plot = 1;
-    cax1 = plot(time_vec, sig(:, channel_to_plot), 'color', 'black');
-    cax2 = plot(time_vec, clean_sig(:, channel_to_plot), 'color', 'blue');
+    channel_to_plot = cur_inspected_channel;
+    cax1 = plot(time_vec, sig(:, channel_to_plot), 'color', '#296EB4', 'LineWidth', 2);
+    cax2 = plot(time_vec, clean_sig(:, channel_to_plot), 'color', '#5DA271', 'LineWidth', 2);
     cax3 = yline(thresholds(channel_to_plot), ':r', 'LineWidth', 3);
     cax4 = yline(-thresholds(channel_to_plot), ':r', 'LineWidth', 3);
-    cax1.Color(4) = 0.2; cax2.Color(4) = 0.2;
+    cax1.Color(4) = 0.5; cax2.Color(4) = 0.5;
 
     % Threshold slider
     b = uicontrol('Parent',f,'Style','slider','Position',[81,54,419,23],...
-              'value',cur_threshold, 'min',0, 'max',200);
+              'value',cur_threshold, 'min',0, 'max',100, 'SliderStep', [1/50 1/50]);
     bgcolor = f.Color;
     bl1 = uicontrol('Parent',f,'Style','text','Position',[50,54,23,23],...
                     'String','0','BackgroundColor',bgcolor);
@@ -166,6 +178,10 @@ function [new_threshold, exit_flag] = inspect_plot(sig, clean_sig, thresholds, o
                     'String','200','BackgroundColor',bgcolor);
     bl3 = uicontrol('Parent',f,'Style','text','Position',[240,25,100,23],...
                     'String','Threshold','BackgroundColor',bgcolor);
+    
+	% Threshold value
+    bl4 = uicontrol('Parent',f,'Style','text','Position',[240,0,50,23],...
+                    'String',num2str(cur_threshold),'BackgroundColor',bgcolor, 'ForegroundColor','red');
                 
     addlistener(b,'ContinuousValueChange',@(hObject, event) changeThresholdAndPlot(hObject, event));
     
@@ -178,27 +194,44 @@ function [new_threshold, exit_flag] = inspect_plot(sig, clean_sig, thresholds, o
         set(cax2,'ydata', gather(new_y));
         set(cax3,'Value', new_thresh);
         set(cax4,'Value', -new_thresh);
+        set(bl4, 'String', num2str(round(nthreshold, 2)))
         drawnow;
     end
     
-    % Continue button
-    continue_button = uicontrol('Parent',f,'String','Continue','Callback',@OnContinueButtonCallback, 'Position',[0,100,100,30]);
-    function OnContinueButtonCallback(~,~)
+    start_y_pos = 100;
+    % Next chunk button
+    nextChunk_button = uicontrol('Parent',f,'String','Next chunk','Callback',@OnNextButtonCallback, 'Position',[0,start_y_pos+100,100,30]);
+    function OnNextButtonCallback(~,~)
         uiresume(f);
+        cur_threshold = get(b,'Value');
+        next_operation_flag = 0;
+    end
+    
+    % Previous chunk button
+    previousChunk_button = uicontrol('Parent',f,'String','Previous chunk','Callback',@OnPreviousButtonCallback, 'Position',[0,start_y_pos+50,100,30]);
+    function OnPreviousButtonCallback(~,~)
+        uiresume(f);
+        cur_threshold = get(b,'Value');
+        next_operation_flag = 1;
     end
     
     % Exit button
-    exit_button = uicontrol('Parent',f,'String','Exit','Callback',@OnExitButtonCallback, 'Position',[0,50,100,30]);
+    exit_button = uicontrol('Parent',f,'String','Exit','Callback',@OnExitButtonCallback, 'Position',[0,start_y_pos,100,30]);
     function OnExitButtonCallback(~,~)
         uiresume(f);
-        exit_flag = 1;
+        cur_threshold = get(b,'Value');
+        next_operation_flag = 2;
+        close(f)
     end
     
+    % Also route figure close request to exit button
+    set(f, 'CloseRequestFcn',@OnExitButtonCallback)
+    
     % Channel selector
-    ddLabel = uicontrol('Parent',f,'Style','text','Position',[0,230,100,50],...
+    ddLabel = uicontrol('Parent',f,'Style','text','Position',[0,start_y_pos+150,100,50],...
                     'String','Channel:','BackgroundColor',bgcolor);
     dd = uicontrol('Parent', f, 'Style','popupmenu', 'String', strsplit(num2str(1:size(sig, 2))),...
-                     'Value',1, 'Position',[30,200,50,50]);
+                     'Value',cur_inspected_channel, 'Position',[30,start_y_pos+120,50,50]);
 
     addlistener(dd,'Action',@(hObject, event) changeChannelAndPlot(hObject, event));
     function changeChannelAndPlot(hObject,event, hplot1, hplot2)
@@ -209,8 +242,5 @@ function [new_threshold, exit_flag] = inspect_plot(sig, clean_sig, thresholds, o
     
     uiwait(f)
     
-    new_threshold = get(b,'Value');
-    
-    close(f)
 end
 end
