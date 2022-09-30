@@ -68,9 +68,10 @@ for i = 1:numel(datafolders)
 
     
 %     NT       = ops.NT ; % number of timepoints per batch
-    NT = 3*ops.fs;  % Can be significantly higher than kilosort's here, but lower it if running out of RAM
-    
+    NT = floor(3*ops.fs);  % Can be significantly higher than kilosort's here, but lower it if running out of RAM
+
     bytes       = get_file_size(ops.fbinary); % size in bytes of raw binary
+
     nTimepoints = floor(bytes/NchanTOT/2); % number of total timepoints
     ops.tstart  = ceil(ops.trange(1) * ops.fs); % starting timepoint for processing data segment
     ops.tend    = min(nTimepoints, ceil(ops.trange(2) * ops.fs)); % ending timepoint
@@ -151,11 +152,11 @@ for i = 1:numel(datafolders)
             % subtract the mean from each channel
             dataRAW = dataRAW - mean(dataRAW, 1); % subtract mean of each channel
 
-            % CAR, common average referencing by median
-            if getOr(ops, 'CAR', 1)
-                % MML edit:take median of good channels only
-                dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
-            end
+%             % CAR, common average referencing by median
+%             if getOr(ops, 'CAR', 1)
+%                 % MML edit:take median of good channels only
+%                 dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
+%             end
 
             datr = filter(b1, a1, dataRAW); % causal forward filter
 
@@ -236,22 +237,24 @@ for i = 1:numel(datafolders)
                 dataRAW = dataRAW';
             end
 
-            dataRAW = single(dataRAW); % convert to float32 so GPU operations are fast
+            datr = single(dataRAW); % convert to float32 so GPU operations are fast
+            
             % subtract the mean from each channel
-            dataRAW = dataRAW - mean(dataRAW, 1); % subtract mean of each channel
+            datr = datr - mean(datr, 1); % subtract mean of each channel
 
             % CAR, common average referencing by median
             if getOr(ops, 'CAR', 1)
                 % MML edit:take median of good channels only
-                dataRAW = dataRAW - median(dataRAW(:, chanMap(igood)), 2); % subtract median across channels
+                datr = datr - median(datr(:, chanMap(igood)), 2); % subtract median across channels
             end
-
-            datr = filter(b1, a1, dataRAW); % causal forward filter
-
-            datr = flipud(datr); % reverse time
-            datr = filter(b1, a1, datr); % causal forward filter again
-            datr = flipud(datr); % reverse time back
-
+            
+            if getOr(ops, 'highpass', 1)
+                datr = filter(b1, a1, datr); % causal forward filter
+                datr = flipud(datr); % reverse time
+                datr = filter(b1, a1, datr); % causal forward filter again
+                datr = flipud(datr); % reverse time back
+            end
+            
             datr    = datr(ioffset + (1:NT),:); % remove timepoints used as buffers
 
             if getOr(ops, 'rm_artifacts', 1)

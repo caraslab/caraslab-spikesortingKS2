@@ -24,9 +24,10 @@ for i=1:length(datafolders_names)
 end
 
 % Remove SUBJ ID from folder names
+subj_in_filename = 0;
 for i = 1:length(datafolders)
     if contains(datafolders{i}, 'SUBJ-ID')
-        subj = 1;
+        subj_in_filename = 1;
         df = split(datafolders{i}, '_');
         id = df{1};
         datafolders{i} = append(df{2},'_',df{3},'_',df{4});
@@ -107,7 +108,7 @@ for day_idx=1:length(unique_days)
     for i = 1:numel(cur_day_datafolders)
         cur_path_name = cur_day_datafolders{i};
         
-        if subj == 1
+        if subj_in_filename == 1
             cur_path_name = append(id, '_', cur_path_name);
             cur_sourcedir = fullfile(Savedir, cur_path_name);
         else

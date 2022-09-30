@@ -180,16 +180,16 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
     %             gwfparams.cluster_quality.cluster_id == cluster_phy_id);
 
             temp_wfs = wf.waveFormsMean(wf_idx, :,:);
-            temp_wfs = abs(temp_wfs);
+            temp_wfs = squeeze(abs(temp_wfs));
 
-            [max_amplitude, ~] = max(temp_wfs, [], 3);
+            [max_amplitude, ~] = max(temp_wfs, [], 2);
+            
             clear temp_wfs
 
-            [~, best_channel] = max(max_amplitude);
-            best_channel_0in = best_channel - 1;
+            [~, best_channel_order] = max(max_amplitude);
 
             % Grab best channel index
-            best_channel_idx = find(gwfparams.chanMap == best_channel_0in);
+            best_channel_0in = gwfparams.chanMap(best_channel_order);
             
             % Store channel and shank info
             best_channels_csv(wf_idx) = best_channel_0in + 1;

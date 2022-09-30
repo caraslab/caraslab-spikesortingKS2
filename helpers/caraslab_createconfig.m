@@ -94,7 +94,8 @@ for i = 1:numel(datafolders)
     %% %%%%% Edit these if necessary %%%%% %%
     % nt0 is the number of points for template matching
     % The default on Kilosort is 61, equivalent to ~2 ms for a 30 kHz sampling
-    % If you start seeing double spikes in phy, consider reducing this
+    % If you start seeing double spikes in phy, consider reducing this;
+    % IMPORTANT: DO NOT INCREASE THIS VALUE OR KILOSORT2 WILL CRASH
     ops.nt0 = round(ops.fs * 0.002);
     
     if ~fetch_tstart_from_behav
@@ -104,13 +105,14 @@ for i = 1:numel(datafolders)
         ops.trange = [tstart Inf];
     end
 
+    ops.highpass = 0; % filter BEFORE kilosort (1)
     ops.CAR = 1;  % CAR after highpass (1)
     
     ops.kilosort_filter = 0; % filter during kilosort, turned off since we're prefiltering (0)
-    
+    m
     ops.deline = 0;  % Fails too often; use comb for now (0)
     
-    ops.comb = 1;  % Comb filter before highpass (1)
+    ops.comb = 0;  % Comb filter before highpass (1)
     
     ops.rm_artifacts = 1;  % Remove super high amplitude events
     ops.std_threshold = 65;  % Threshold for artifact rejection (65)

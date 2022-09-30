@@ -120,16 +120,16 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter, load_previous_g
             % The above usually works but sometimes phy fails at detecting the best
             % channel, so let's do it manually
             temp_wfs = wf.waveFormsMean(wf_idx, :,:);
-            temp_wfs = abs(temp_wfs);
+            temp_wfs = squeeze(abs(temp_wfs));
 
-            [max_amplitude, ~] = max(temp_wfs, [], 3);
+            [max_amplitude, ~] = max(temp_wfs, [], 2);
             clear temp_wfs
 
-            [~, best_channel] = max(max_amplitude);
-            best_channel_0in = best_channel - 1;
+            [~, best_channel_order] = max(max_amplitude);
+%             best_channel_0in = best_channel - 1;
 
             % Grab best channel index
-            best_channel_idx = find(gwfparams.chanMap == best_channel_0in);
+            best_channel_0in = gwfparams.chanMap(best_channel_order);
             
             % Store channel and shank info
             best_channels_csv(wf_idx) = best_channel_0in + 1;
@@ -142,7 +142,7 @@ function cluster_quality_metrics(Savedir, show_plots, bp_filter, load_previous_g
             end
             
             % Squeeze out and store raw waveforms and averages
-            cur_wfs = wf.waveForms(wf_idx, :, best_channel_idx,:);
+            cur_wfs = wf.waveForms(wf_idx, :, best_channel_order,:);
             cur_wfs = squeeze(cur_wfs);
             
             %% ISI violations

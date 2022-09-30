@@ -134,8 +134,26 @@ function plot_unit_shanks(Savedir, show_plots, bp_filter, load_previous_gwfparam
                 
                 % Grab x and y positions; rescale them to look closer
                 % together; might need to be tweaked for each probe type
-                x_offset = scaled_channel_positions(cur_chanMap_idx, 1)*120;
-                y_offset = scaled_channel_positions(cur_chanMap_idx, 2)*5000;
+                % It will fail if it tries to grab values from a bad
+                % channel. Add this here to skip them
+                try
+                    x_offset = scaled_channel_positions(cur_chanMap_idx, 1)*120;
+                catch ME
+                    if strcmp(ME.identifier, 'MATLAB:badsubscript')
+                        continue
+                    else
+                        rethrow(ME)
+                    end
+                end
+                try
+                    y_offset = scaled_channel_positions(cur_chanMap_idx, 2)*5000;
+                catch ME
+                    if strcmp(ME.identifier, 'MATLAB:badsubscript')
+                        continue
+                    else
+                        rethrow(ME)
+                    end
+                end
                 
                 % Squeeze out and store raw waveforms and averages
                 snip_points = 20;  % snip some points at the end of template

@@ -41,29 +41,27 @@
 
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % 
-% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
-% Probetype = 'NNA4x16Lin64';
-% badchannels = [1:5, 33, 35, 37, 55, 61, 64];
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [1:5, 33, 35, 37, 55, 61, 64];
 % % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-151-210430-165127';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [33, 35, 37, 55, 61, 64];
 % %  
-% % 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [33, 35, 37, 55, 61, 64];
-
+% % % % 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [33, 35, 37, 55, 61, 64];
 % 
+% % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-174-201020-101024'; 
 % Probetype = 'NNBuz5x1264';
 % badchannels = [33, 35, 37, 55, 61, 64];
-
-
 
 chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
 chanMap = [chanMapSavedir '/' Probetype '_synapse.mat']; 
@@ -145,8 +143,10 @@ caraslab_mat2datChunked(Savedir)
 % 1. Comb filter (if ops.comb==1)
 % 2. Median-CAR filter (if ops.CAR==1)
 % 3. Kilosort-inspired GPU-based chunkwise filter
-% 4. Saves a filename_CLEAN.dat file
-caraslab_preprocessdat(Savedir)
+% 4. Chunk-wise mean-std-based artifact removal (not optimal but helps)
+% 5. Saves a filename_CLEAN.dat file
+inspect_artifact_removal_only = 0;  % Beta version
+caraslab_preprocessdat(Savedir, inspect_artifact_removal_only)
 
 
 %% 7. CONCATENATE SAME DAY RECORDINGS
@@ -183,6 +183,7 @@ caraslab_kilosort(Savedir, rootH)
 % evironment; The Python-from-MatLab pipeline is tricky to debug...
 % py_code_folder = '/home/matheus/Documents/Spike sorting code/sortingQuality-master/helpers';
 % id_noise_templates_wrapper(Savedir, sel, 1, py_code_folder)
+
 
 %% 11. REMOVE DOUBLE-COUNTED SPIKES
 % This function removes potential double-counted spikes detected by
@@ -228,9 +229,9 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 show_plots = 1;
 filter_300hz = 0;
 load_previous_gwfparams = 1;
-plot_mean = 0;
-plot_wf_samples = 1;
-plot_std = 0;
+plot_mean = 1;
+plot_wf_samples = 0;
+plot_std = 1;
 plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams, ...
     plot_mean, plot_std, plot_wf_samples)
 

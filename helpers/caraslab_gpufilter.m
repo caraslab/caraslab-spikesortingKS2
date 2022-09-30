@@ -87,6 +87,7 @@ function caraslab_gpufilter(cur_savedir, optional_ops)
         buff = fread(fid, [NchanTOT NTbuff], 'int16'); % read and reshape. Assumes int16 data (which should perhaps change to an option)
 
         if isempty(buff)
+            fprintf('\nEmpty buffer; check Nbatch\n')
             break; % this shouldn't really happen, unless we counted data batches wrong
         end
 

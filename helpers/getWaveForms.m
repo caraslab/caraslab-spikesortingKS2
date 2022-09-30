@@ -36,7 +36,7 @@ if refilter
     ops.comb = 0;
     ops.CAR = 0;
     
-    ops.fbinary = ops.fclean;
+%     ops.fbinary = ops.fclean;
     
     if ~isfield(ops, 'igood')
         ops.igood=true(size(1:ops.NchanTOT));
@@ -46,7 +46,7 @@ if refilter
         ops.igood(ops.badchannels) = 0;
     end
     % Create new filtered file
-    temp_dir = dir(ops.fclean);
+    temp_dir = dir(ops.fbinary);
     ops.fclean = fullfile(temp_dir.folder, [temp_dir.name(1:end-4) '300hz.dat']);
     
     caraslab_gpufilter(temp_dir.folder, ops)

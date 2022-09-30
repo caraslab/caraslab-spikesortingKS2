@@ -43,7 +43,7 @@ numchans = ops.NchanTOT;
 
 %Define the number of samples before and after each artifact peak to be
 %normalized. This value was empirically determined.
-win = 0.01*ops.fs;
+win = floor(0.01*ops.fs);
 
 
 % Save original signal here in case it needs to  be recovered after
@@ -89,7 +89,7 @@ function [ret_sig, thresh] = rm_artifacts(sig,numchans,win, std_threshold)
     % values; this way, brief moments of noise will not affect the true
     % signal median and std
     n_blocks = 100;
-    block_size = size(sig, 1) / n_blocks;
+    block_size = floor(size(sig, 1) / n_blocks);
     median_by_block = nan(n_blocks, numchans);
     std_by_block = nan(n_blocks, numchans);
     abs_median_by_block = nan(n_blocks, numchans);
@@ -120,8 +120,18 @@ function [ret_sig, thresh] = rm_artifacts(sig,numchans,win, std_threshold)
         cleansig_ch = sig(:,ch);
 %         cleansig_ch(abs(cleansig_ch) > thresh(ch)) = sig_std(ch).*randn() + sig_median(ch);
         peak_indeces = find(abs(cleansig_ch) > thresh(ch) == 1);
+        
+        % Allowing a maximum number of peaks detected through the filter
+        % helps avoid eliminating giant spikes; I looked through several
+        % shock artifacts, and there's always many thousands of indeces
+        % thresholded; allowing about 500 through the filter reduces the
+        % chance that spikes will be filtered out
+%         if numel(peak_indeces) > 500
+%             disp('here')
+%         end
+%         
 %         [p,l]=findpeaks(abs(cleansig_ch),ops.fs,'MinPeakHeight', thresh(ch),'MinPeakDistance',0.05);
-        for i = 1:win/2:numel(peak_indeces)
+        for i = 1:floor(win/2):numel(peak_indeces)
             samp = peak_indeces(i);
             try
 %                 cleansig_ch(samp-win+1:samp+win) = zeros(length(cleansig_ch(samp-win+1:samp+win)), 1);
@@ -170,7 +180,7 @@ function [cur_threshold, next_operation_flag, channel_to_plot] = inspect_plot(si
 
     % Threshold slider
     b = uicontrol('Parent',f,'Style','slider','Position',[81,54,419,23],...
-              'value',cur_threshold, 'min',0, 'max',100, 'SliderStep', [1/50 1/50]);
+              'value',cur_threshold, 'min',0, 'max',200, 'SliderStep', [1/50 1/50]);
     bgcolor = f.Color;
     bl1 = uicontrol('Parent',f,'Style','text','Position',[50,54,23,23],...
                     'String','0','BackgroundColor',bgcolor);
