@@ -55,10 +55,10 @@ Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [];
 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-390';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-390'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [];
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-390';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-390'; 
+% Probetype = 'NNA4x16Lin64';
+% badchannels = [];
 
 % Acute opto
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-83';
@@ -103,6 +103,12 @@ badchannels = [];
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [];
+
+% OFCMuscimol + ACx recordings
+Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-423';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-423'; 
+Probetype = 'NNBuz5x1264';
+badchannels = [];
 
 
 chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
