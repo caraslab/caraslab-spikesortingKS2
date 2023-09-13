@@ -174,6 +174,7 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
             cluster_phy_id = good_cluster_idx(wf_idx);
 
             % Get channel with highest amplitude for this unit
+            
             % This usually works but sometimes phy fails at detecting the best
             % channel, so let's do it manually
     %         best_channel = gwfparams.cluster_quality.ch(...
@@ -192,6 +193,7 @@ function get_timestamps_and_wf_measurements(Savedir, show_plots, bp_filter)
             best_channel_0in = gwfparams.chanMap(best_channel_order);
             
             % Store channel and shank info
+            % Add 1 to best channel to make it 1-index base
             best_channels_csv(wf_idx) = best_channel_0in + 1;
             shanks(wf_idx) = gwfparams.cluster_quality.sh(gwfparams.cluster_quality.cluster_id == cluster_phy_id);  
             

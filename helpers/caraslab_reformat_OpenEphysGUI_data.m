@@ -1,4 +1,4 @@
-function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
+function caraslab_reformat_OpenEphysGUI_data(input_dir, output_dir, format, data_channel_idx, adc_channel_idx)
     %epData = caras_lab_reformat_synapse_data(Tankdir,Savedir,sel);
     %   Function to reformat and save ephys data from OpenEphys GUI.
     %
@@ -15,8 +15,18 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
     %       .info file containing ssupporting information (can be read as a -mat)
     %       CSV files with TTL information
     %   Written by M Macedo-Lima July, 2021
-
-
+    
+    % Provide defaults if user is confident these channels can be read from
+    % openephys files
+    if nargin < 4
+        data_channel_idx = [];
+        adc_channel_idx = [];
+    end
+    
+    if nargin < 5
+        adc_channel_idx = [];
+    end
+    
     %Check that tank directory exists and abort if it doesn't
     if ~exist(input_dir,'dir')
         fprintf('\n Tank directory does not exist!!\n')
@@ -124,10 +134,15 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         
         % Weird bug in OpenEphys GUI sometimes names these differently
         % Tweak this mannually
-        if length(data_channels) == 0
-            disp(['No channels named CH; tweak mannually (Lines 129,130) if needed'])
-            data_channels = all_channels(1:64);  % Look into your input folder and check that the first Nchannel files are your data files
-            adc_channels = all_channels(65);  % Check that your next channel is an adc file, or make this [] if you want to ignore it
+        if isempty(data_channels)
+            disp('No channels named CH; Make sure you provided channel numbers')
+            if isempty(data_channel_idx)
+                disp('Please provide array with data channel numbers, e.g. 1:64')
+                return
+            end
+            
+            data_channels = all_channels(data_channel_idx);
+            adc_channels = all_channels(adc_channel_idx);
         end
 
         
@@ -273,9 +288,10 @@ function caraslab_reformat_OpenEphysGUI_data(input_dir,output_dir, format)
         % Weird bug in OpenEphys GUI sometimes names these differently
         % Tweak this mannually
         if sum(data_channel_indeces) == 0
-            disp(['No channels named CH; tweak mannually (Lines 270,271)'])
-            data_channel_indeces = [ones(1, 64) 0];
-            adc_channel_index = [];
+            disp(['No channels named CH; tweak mannually (Lines 277,278)'])
+            allchan = [data_channel_idx adc_channel_idx];
+            data_channel_indeces = ismember(allchan, data_channel_idx);
+            adc_channel_index = ismember(allchan, adc_channel_idx);
         end
 
         

@@ -1,33 +1,38 @@
 % Quick n' dirty script to output voltage recordings by channel and color
 % them according to timestamps detected through unit sorting
 
-clusters_to_plot = [51];
+clusters_to_plot = [2075];
 cluster_colors = {'black'};
-channels_to_plot = [1];
+channels_to_plot = [11 13 14];
 
-nChanTOT = 4;  % channels in probe
+nChanTOT = 64;  % channels in probe
 
-cur_time = 356;
+cur_time = 1475;
 
 sr = 30000;
 
 % Before and after time chunk
-pre_chunk_s = 1;
-post_chunk_s = 20;
+pre_chunk_s = 10;
+post_chunk_s = 10;
 
 % Before and after waveform timestamp
 pre_wf_s = 0.001;
 post_wf_s = 0.003;
 
 % IO paths to find your file
-subj_id = 'SUBJ-ID-84';
-recording_name = '210813_concat_L2770';
-input_dir = '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-84/210813_concat_L2770';
-input_file = [input_dir filesep recording_name '_CLEAN300hz.dat'];
+subj_id = 'SUBJ-ID-448';
+recording_name = '221221_concat';
+input_dir = '/mnt/CL_8TB_3/Matheus/Ephys recordings/OFC-Cannula_ACx-Electrode/Sorting/SUBJ-ID-448/221221_concat';
+input_file = fullfile(input_dir, [recording_name '_CLEAN300hz.dat']);
 
 % Key file to shade around stimulus, e.g. optogenetic stimulation
-key_file = '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-84/2021-08-13_13-26-07_L2770/CSV files/2021-08-13_13-26-07_L2770_DAC1.csv';
-key_file = readtable(key_file);
+key_file = '/mnt/CL_8TB_3/Matheus/Ephys recordings/OFC-Cannula_ACx-Electrode/Sorting/SUBJ-ID-448/221221_concat/CSV files/SUBJ-ID-448_SUBJ-ID-448_2022-12-21_10-25-39_Active_trialInfo.csv';
+key_file = readtable(key_file, 'Delimiter', ',');
+breakpoint_seconds = 1179;
+
+go_trial_filter = key_file.TrialType == 0;
+trial_onset_offset.Onset = key_file{go_trial_filter, 'Trial_onset'} + breakpoint_seconds;
+trial_onset_offset.Offset = key_file{go_trial_filter, 'Trial_offset'} + breakpoint_seconds;
 
 shading_color = [245, 114, 66]/255;  % RGB amber
 shading_color = [107, 159, 198]/255; % RGB blue
@@ -83,8 +88,8 @@ for ch_idx=1:length(channels_to_plot)
     
     if do_shading
         % Apply shading during stims
-        relevant_timestamps = key_file((key_file.Onset > cur_time - pre_chunk_s) & ...
-                                        (key_file.Onset < cur_time + post_chunk_s),:);
+        relevant_timestamps = trial_onset_offset((trial_onset_offset.Onset > cur_time - pre_chunk_s) & ...
+                                        (trial_onset_offset.Onset < cur_time + post_chunk_s),:);
 
 
         fill_YY = [min(scaling_factor*ch_idx+snip_to_plot), max(scaling_factor*ch_idx+snip_to_plot)];

@@ -40,23 +40,23 @@
 
 
 Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
-% 
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
-Probetype = 'NNA4x16Lin64';
-badchannels = [1:5, 33, 35, 37, 55, 61, 64];
-% % 
-% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-151-210430-165127';
-% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
+
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-197-210212-153532';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-197-210212-153532'; 
 % Probetype = 'NNA4x16Lin64';
-% badchannels = [33, 35, 37, 55, 61, 64];
+% badchannels = [1:5, 33, 35, 37, 55, 61, 64];
+% % 
+Tankdir = '/mnt/CL_8TB_3/temp_tank/SUBJ-ID-151-210430-165127';
+Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-151-210430-165127'; 
+Probetype = 'NNA4x16Lin64';
+badchannels = [33, 35, 37, 55, 61, 64];
 % %  
 % % % % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154-210428-131310';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFC_PL_recording/Sorting/SUBJ-ID-154-210428-131310'; 
 % Probetype = 'NNA4x16Lin64';
 % badchannels = [33, 35, 37, 55, 61, 64];
-% 
+
 % % 
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-174-201020-101024';
 % Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-174-201020-101024'; 
@@ -162,9 +162,7 @@ caraslab_concatenate_sameDay_recordings(Savedir, chanMap, 'synapse')
 
 %% 8. CONCATENATE SAME DEPTH RECORDINGS ACROSS DAYS
 % % not currently in use
-% NchanTOT = 64;
-% NT = 32832;  % A reasonable batch size. Reduce if out of memory
-% caraslab_concatenate_sameDepth_recordings(Savedir, sel, NchanTOT, NT)
+caraslab_concatenate_sameDepth_recordings(Savedir, 'synapse')
 
 %% 9. RUN KILOSORT
 %   This function runs kilosort on the selected data.
@@ -217,7 +215,7 @@ remove_double_counted_spikes(Savedir, reload_original_npys)
 % also refilter the data with a 300-6000Hz bandpass filter and save a new
 % ~~CLEAN300Hz.dat
 show_plots = 1;
-filter_300hz = 0;
+filter_300hz = 1;
 get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 
 

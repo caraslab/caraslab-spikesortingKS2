@@ -62,8 +62,21 @@ for i = 1:numel(datafolders)
     cur_savedir = [Savedir filesep cur_path.name];
     matfilename = fullfile(cur_savedir, [cur_path.name '.mat']);
     infofilename = fullfile(cur_savedir, [cur_path.name '.info']);
+
+    % Load pre-existing ops so that non-essential fields are preserved
+    try
+        load(fullfile(cur_savedir, 'config.mat'));
+        catch ME
+        if strcmp(ME.identifier, 'MATLAB:load:couldNotReadFile')
+            fprintf('\nPre-existing config.mat not present. Creating a new one...\n')
+        else
+            fprintf(ME.identifier)
+            fprintf(ME.message)
+            continue
+        end
+    end
     
-    % Catch error if -mat file is not found
+    % Catch error if -mat infofile is not found
     try
         temp = load(infofilename, '-mat');
         %Get the sampling rate and number of channels
@@ -85,7 +98,7 @@ for i = 1:numel(datafolders)
             continue
         end
     end
-    
+
     %Save the path to the -mat data file (contains raw voltage data)
     ops.rawdata = matfilename;
     
@@ -114,8 +127,10 @@ for i = 1:numel(datafolders)
     
     ops.comb = 1;  % Comb filter before highpass (1)
     
+    ops.fig = 0;  % Show kilosort sorting quality diagnostic plots
+    
     ops.rm_artifacts = 1;  % Remove super high amplitude events
-    ops.std_threshold = 65;  % Threshold for artifact rejection (65)
+    ops.std_threshold = 30;  % Threshold for artifact rejection (65)
     
     ops.Nchan = ops.NchanTOT - numel(badchannels);              %number of active channels
 

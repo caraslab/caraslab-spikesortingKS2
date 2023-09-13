@@ -32,7 +32,7 @@
 % rootH: path for temp Kilosort file. Should be a fast SSD
 
 
-Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
+% Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 
 % OFC PL
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-231';
@@ -97,6 +97,11 @@ Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-176'; 
 % Probetype = 'NNoptrodeTet4';
 % badchannels = []; 
+% 
+% Tankdir = '/mnt/CL_8TB_3/temp_tank/SUBJ-ID-325';
+% Savedir =  '/mnt/CL_4TB_2/Matt/Acute_opto_recordings/SUBJ-ID-325'; 
+% Probetype = 'NNoptrodeLin4';
+% badchannels = []; 
 
 % 154's shock training was with intan
 % Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-154';
@@ -105,11 +110,22 @@ Behaviordir = '/mnt/CL_4TB_2/Matt/OFC_PL_recording/matlab_data_files';
 % badchannels = [];
 
 % OFCMuscimol + ACx recordings
-Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-423';
-Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-423'; 
-Probetype = 'NNBuz5x1264';
-badchannels = [];
+Behaviordir = '/mnt/CL_8TB_3/Matheus/Ephys recordings/OFC-Cannula_ACx-Electrode/matlab_data_files';
 
+% Tankdir = '/mnt/CL_4TB_2/temp_tanks/SUBJ-ID-423';
+% Savedir =  '/mnt/CL_4TB_2/Matt/OFCmuscimol_ACxrecording/Sorting/SUBJ-ID-423'; 
+% Probetype = 'NNBuz5x1264';
+% badchannels = [];
+% 
+% Tankdir = '/mnt/CL_8TB_3/temp_tank/SUBJ-ID-448';
+% Savedir =  '/mnt/CL_8TB_3/Matheus/Ephys recordings/OFC-Cannula_ACx-Electrode/Sorting/SUBJ-ID-448'; 
+% Probetype = 'NNBuz5x1264';
+% badchannels = [33:36, 55:57, 59:61, 63, 64];  % sh4 broken during surgery
+
+Tankdir = '/mnt/CL_8TB_3/temp_tank/SUBJ-ID-575';
+Savedir =  '/mnt/CL_8TB_3/Matheus/Ephys recordings/OFC-Cannula_ACx-Electrode/Sorting/SUBJ-ID-575'; 
+Probetype = 'NNBuz5x1264';
+badchannels = [18]; 
 
 chanMapSavedir = '/home/matheus/Documents/caraslab-spikesortingKS2/channelmaps';
 chanMap = [chanMapSavedir '/' Probetype '_intan.mat']; 
@@ -123,6 +139,7 @@ rootH = '/home/matheus/Documents';
 %   doesn't already exist.
 caraslab_createChannelMap(chanMapSavedir,Probetype, 'intan');
 
+
 %% 2. CONVERT RAW OPENEPHYS DATA TO *.DAT FILE
 %   Function to reformat and save ephys data from OpenEphys GUI.
 %
@@ -135,7 +152,7 @@ caraslab_createChannelMap(chanMapSavedir,Probetype, 'intan');
 %                   in the tank directory. 
 %                   
 %                   if 1, user will be prompted to select a BLOCK
-caraslab_reformat_OpenEphysGUI_data(Tankdir, Savedir, 'oe');
+caraslab_reformat_OpenEphysGUI_data(Tankdir, Savedir, 'oe', 1:64, 65);
 
 
 %% 3. Output timestamps info
@@ -177,7 +194,7 @@ caraslab_createconfig(Savedir,chanMap, badchannels, fetch_tstart_from_behav, 'in
 % 1. Comb filter (if ops.comb==1)
 % 2. Median-CAR filter (if ops.CAR==1)
 % 3. Kilosort-inspired GPU-based chunkwise filter
-% 4. Chunk-wise mean-std-based artifact removal (not optimal but helps)
+% 4. Chunk-wise mean-std-based artifact remova                                                                      l (not optimal but helps)
 % 5. Saves a filename_CLEAN.dat file
 inspect_artifact_removal_only = 0;  % Beta version
 caraslab_preprocessdat(Savedir, inspect_artifact_removal_only)
@@ -200,6 +217,7 @@ caraslab_concatenate_sameDay_recordings(Savedir, chanMap, 'intan')
 % NT = 32832;  % A reasonable batch size. Reduce if out of memory
 % caraslab_concatenate_sameDepth_recordings(Savedir, sel, NchanTOT, NT)
 
+
 %% 8. RUN KILOSORT
 %   This function runs kilosort on the selected data.
 % rootH is the path to the kilosort temp file; Better if a fast SSD
@@ -214,10 +232,10 @@ caraslab_kilosort(Savedir, rootH)
 
 % This function eliminates noise by running an AllenInstitute python script
 % I didn't translate it to MatLab, but instead adapted it to run from
-% within MatLab by shuffling variables back and forth from a python
+% within MatLab by shutling variables back and forth from a python
 % evironment; The Python-from-MatLab pipeline is a little clunky...
 % py_code_folder = '/home/matheus/Documents/caraslab-spikesortingKS2-master/sortingQuality-master/helpers';
-% id_noise_templates_wrapper(Savedir, 1, 1, py_code_folder)
+% id_noise_templates_wrapper(Savedir, 1, 1,0 py_code_folder)
 
 
 %% 10. REMOVE DOUBLE-COUNTED SPIKES
@@ -229,6 +247,7 @@ caraslab_kilosort(Savedir, rootH)
 % WARNING: setting this to 1 resets cluster numbers and messes up previous sorting
 %               but restores original KS output
 reload_original_npys = 0;
+
 remove_double_counted_spikes(Savedir, reload_original_npys)
 
 
@@ -251,7 +270,7 @@ remove_double_counted_spikes(Savedir, reload_original_npys)
 % also refilter the data with a 300-6000Hz bandpass filter and save a new
 % ~~CLEAN300Hz.dat
 show_plots = 1;
-filter_300hz = 0;
+filter_300hz = 1;
 get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 
 
@@ -260,12 +279,15 @@ get_timestamps_and_wf_measurements(Savedir, show_plots, filter_300hz)
 % spike means and SEM organized in space in a pdf. If filter_300hz==0, it will
 % search for the 300hz bandpass filtered file. Otherwise, it will filter
 % again
-show_plots = 0;
+show_plots = 1;
 filter_300hz = 0;
 load_previous_gwfparams = 1;
 plot_unit_shanks(Savedir, show_plots, filter_300hz, load_previous_gwfparams, 1, 1, 0)
 
 %%
+show_plots = 1;
+filter_300hz = 0;
+load_previous_gwfparams = 1;
 plot_autocorrelograms(Savedir, show_plots, filter_300hz, load_previous_gwfparams)
 
 %% 14. QUALITY METRICS
